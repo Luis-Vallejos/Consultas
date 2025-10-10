@@ -3,6 +3,8 @@ package com.practica.consultas.repository;
 import com.practica.consultas.model.Reserva;
 import java.time.LocalDateTime;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 /**
@@ -12,9 +14,17 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface ReservaRepository extends JpaRepository<Reserva, Long> {
 
-    boolean existsBySalaIdAndInicioBeforeAndFinAfter(
-            Long salaId,
-            LocalDateTime fin,
-            LocalDateTime inicio
+    @Query("""
+           SELECT CASE WHEN COUNT(r) > 0 THEN TRUE ELSE FALSE END
+           FROM Reserva r
+           WHERE r.sala.id = :salaId
+             AND (
+                 (r.inicio < :fin AND r.fin > :inicio)
+             )
+           """)
+    boolean existsBySalaAndFechas(
+            @Param("salaId") Long salaId,
+            @Param("inicio") LocalDateTime inicio,
+            @Param("fin") LocalDateTime fin
     );
 }

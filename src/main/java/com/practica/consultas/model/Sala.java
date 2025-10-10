@@ -38,7 +38,7 @@ public class Sala implements Serializable {
     @Id
     @EqualsAndHashCode.Include
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "Id", updatable = false)
+    @Column(name = "id", updatable = false)
     private Long id;
 
     @Column(name = "nombre", length = 50, nullable = false)

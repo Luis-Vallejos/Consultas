@@ -43,7 +43,7 @@ public class Reserva implements Serializable {
     @Id
     @EqualsAndHashCode.Include
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "Id", updatable = false)
+    @Column(name = "id", updatable = false)
     private Long id;
 
     @EqualsAndHashCode.Include

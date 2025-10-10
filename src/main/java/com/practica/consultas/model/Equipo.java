@@ -36,7 +36,7 @@ public class Equipo implements Serializable {
     @Id
     @EqualsAndHashCode.Include
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "Id", updatable = false)
+    @Column(name = "id", updatable = false)
     private Long id;
 
     @Column(name = "nombre", length = 50, nullable = false)
@@ -47,6 +47,9 @@ public class Equipo implements Serializable {
 
     @Column(name = "estado", length = 50, nullable = false)
     private String estado;
+    
+    @Column(name = "descripcion", length = 100)
+    private String descripcion;
 
     @Version
     @Column(name = "Version")
