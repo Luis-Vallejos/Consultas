@@ -1,23 +1,72 @@
 package com.practica.consultas.service.impl;
 
+import com.practica.consultas.request.SalaRequest;
+import com.practica.consultas.model.Equipo;
 import com.practica.consultas.model.Sala;
+import com.practica.consultas.repository.EquipoRepository;
 import com.practica.consultas.repository.SalaRepository;
+import com.practica.consultas.repository.specification.SalaSpecification;
 import com.practica.consultas.service.ISalaService;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
-/**
- *
- * @author Luis
- */
 @Service
 @Transactional
 @RequiredArgsConstructor
 public class SalaServiceImpl implements ISalaService {
 
     private final SalaRepository salaRepository;
+    private final EquipoRepository equipoRepository;
+
+    @Override
+    public Page<Sala> buscar(Integer capacidadMinima, Long equipoId, Boolean activa, Pageable pageable) {
+        Specification<Sala> spec = Specification.where(SalaSpecification.tieneCapacidadMinima(capacidadMinima))
+                .and(SalaSpecification.tieneEquipo(equipoId))
+                .and(SalaSpecification.estaActiva(activa));
+        return salaRepository.findAll(spec, pageable);
+    }
+
+    @Override
+    public Sala crear(SalaRequest salaRequest) {
+        Sala sala = new Sala();
+        sala.setNombre(salaRequest.nombre());
+        sala.setCapacidad(salaRequest.capacidad());
+        sala.setUbicacion(salaRequest.ubicacion());
+        sala.setActiva(salaRequest.activa());
+
+        if (salaRequest.equipoIds() != null && !salaRequest.equipoIds().isEmpty()) {
+            Set<Equipo> equipos = new HashSet<>(equipoRepository.findAllById(salaRequest.equipoIds()));
+            sala.setEquipos(equipos);
+        }
+
+        return salaRepository.save(sala);
+    }
+
+    @Override
+    public Sala actualizar(Long id, SalaRequest salaRequest) {
+        Sala sala = salaRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Sala no encontrada con id: " + id));
+
+        sala.setNombre(salaRequest.nombre());
+        sala.setCapacidad(salaRequest.capacidad());
+        sala.setUbicacion(salaRequest.ubicacion());
+        sala.setActiva(salaRequest.activa());
+
+        if (salaRequest.equipoIds() != null) {
+            Set<Equipo> equipos = new HashSet<>(equipoRepository.findAllById(salaRequest.equipoIds()));
+            sala.setEquipos(equipos);
+        }
+
+        return salaRepository.save(sala);
+    }
 
     @Override
     public boolean existsByNombre(String nombre) {

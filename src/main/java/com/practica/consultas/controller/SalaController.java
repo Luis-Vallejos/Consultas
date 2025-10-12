@@ -1,55 +1,64 @@
 package com.practica.consultas.controller;
 
-import com.practica.consultas.controller.generic.CrudController;
+import com.practica.consultas.dto.SalaDto;
+import com.practica.consultas.request.SalaRequest;
 import com.practica.consultas.model.Sala;
 import com.practica.consultas.service.ISalaService;
-import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-/**
- *
- * @author Luis
- */
 @RestController
 @RequestMapping("/api/salas")
 @CrossOrigin(origins = "*")
-public class SalaController implements CrudController<Sala, Long> {
+public class SalaController {
 
     @Autowired
     private ISalaService salaService;
 
-    @Override
-    public ResponseEntity<List<Sala>> listAll() {
-        return ResponseEntity.ok(salaService.findAll());
+    @GetMapping
+    public ResponseEntity<Page<SalaDto>> buscarSalas(
+            @RequestParam(required = false) Integer capacidadMinima,
+            @RequestParam(required = false) Long equipoId,
+            @RequestParam(required = false) Boolean activa,
+            @PageableDefault(size = 10, sort = "nombre") Pageable pageable
+    ) {
+        Page<Sala> salas = salaService.buscar(capacidadMinima, equipoId, activa, pageable);
+        Page<SalaDto> dtos = salas.map(SalaDto::fromEntity);
+        return ResponseEntity.ok(dtos);
     }
 
-    @Override
-    public ResponseEntity<Sala> getById(@PathVariable Long id) {
+    @GetMapping("/{id}")
+    public ResponseEntity<SalaDto> getById(@PathVariable Long id) {
         Sala s = salaService.findById(id);
-        return s != null ? ResponseEntity.ok(s) : ResponseEntity.notFound().build();
+        return s != null ? ResponseEntity.ok(SalaDto.fromEntity(s)) : ResponseEntity.notFound().build();
     }
 
-    @Override
-    public ResponseEntity<Sala> create(@RequestBody Sala dto) {
-        Sala nueva = salaService.create(dto);
-        return ResponseEntity.ok(nueva);
+    @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<SalaDto> create(@RequestBody SalaRequest request) {
+        Sala nueva = salaService.crear(request);
+        return ResponseEntity.ok(SalaDto.fromEntity(nueva));
     }
 
-    @Override
-    public ResponseEntity<Sala> update(@PathVariable Long id, @RequestBody Sala dto) {
-        Sala actualizada = salaService.edit(id, dto);
-        return actualizada != null ? ResponseEntity.ok(actualizada) : ResponseEntity.notFound().build();
+    @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<SalaDto> update(@PathVariable Long id, @RequestBody SalaRequest request) {
+        Sala actualizada = salaService.actualizar(id, request);
+        return actualizada != null ? ResponseEntity.ok(SalaDto.fromEntity(actualizada)) : ResponseEntity.notFound().build();
     }
 
-    @Override
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         boolean eliminado = salaService.delete(id);
         return eliminado ? ResponseEntity.noContent().build() : ResponseEntity.notFound().build();
     }
 
-    // Extra: verificar si existe sala por nombre
     @GetMapping("/exists")
     public ResponseEntity<Boolean> existsByNombre(@RequestParam String nombre) {
         return ResponseEntity.ok(salaService.existsByNombre(nombre));
