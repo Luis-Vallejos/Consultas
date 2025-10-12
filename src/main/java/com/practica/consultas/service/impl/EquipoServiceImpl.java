@@ -1,18 +1,19 @@
 package com.practica.consultas.service.impl;
 
+import com.practica.consultas.dto.EquipoDto;
 import com.practica.consultas.model.Equipo;
 import com.practica.consultas.repository.EquipoRepository;
+import com.practica.consultas.request.EquipoRequest;
 import com.practica.consultas.service.IEquipoService;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-/**
- *
- * @author Luis
- */
 @Service
 @Transactional
 @RequiredArgsConstructor
@@ -21,8 +22,17 @@ public class EquipoServiceImpl implements IEquipoService {
     private final EquipoRepository equipoRepository;
 
     @Override
-    public List<Equipo> findByEstado(String estado) {
-        return equipoRepository.findByEstado(estado);
+    public List<EquipoDto> findByEstado(String estado) {
+        return equipoRepository.findByEstado(estado).stream()
+                .map(EquipoDto::fromEntity)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public EquipoDto findDtoById(Long id) {
+        return equipoRepository.findById(id)
+                .map(EquipoDto::fromEntity)
+                .orElse(null);
     }
 
     @Override
@@ -31,13 +41,46 @@ public class EquipoServiceImpl implements IEquipoService {
     }
 
     @Override
+    public List<EquipoDto> findAllDtos() {
+        return equipoRepository.findAll().stream()
+                .map(EquipoDto::fromEntity)
+                .collect(Collectors.toList());
+    }
+
+    @Override
     public ArrayList<Equipo> findAll() {
         return (ArrayList<Equipo>) equipoRepository.findAll();
     }
 
     @Override
+    public EquipoDto create(EquipoRequest request) {
+        Equipo equipo = new Equipo();
+        equipo.setNombre(request.nombre());
+        equipo.setTipo(request.tipo());
+        equipo.setEstado(request.estado());
+        equipo.setDescripcion(request.descripcion());
+
+        Equipo guardado = equipoRepository.save(equipo);
+        return EquipoDto.fromEntity(guardado);
+    }
+
+    @Override
     public Equipo create(Equipo entity) {
         return equipoRepository.save(entity);
+    }
+
+    @Override
+    public EquipoDto edit(Long id, EquipoRequest request) {
+        Equipo equipo = equipoRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Equipo no encontrado con id: " + id));
+
+        equipo.setNombre(request.nombre());
+        equipo.setEstado(request.estado());
+        equipo.setTipo(request.tipo());
+        equipo.setDescripcion(request.descripcion());
+
+        Equipo actualizado = equipoRepository.save(equipo);
+        return EquipoDto.fromEntity(actualizado);
     }
 
     @Override
