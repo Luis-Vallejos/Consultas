@@ -6,10 +6,6 @@ import com.practica.consultas.service.generic.ICrudService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
-/**
- *
- * @author Luis
- */
 public interface ISalaService extends ICrudService<Sala, Long> {
 
     boolean existsByNombre(String nombre);
@@ -18,6 +14,7 @@ public interface ISalaService extends ICrudService<Sala, Long> {
 
     Sala actualizar(Long id, SalaRequest salaRequest);
 
-    Page<Sala> buscar(Integer capacidadMinima, Long equipoId, Boolean activa, Pageable pageable);
+    // Actualizamos la firma del método para que acepte un String para el tipo de equipo
+    Page<Sala> buscar(Integer capacidadMinima, String tipoEquipo, Boolean activa, Pageable pageable);
 
 }
