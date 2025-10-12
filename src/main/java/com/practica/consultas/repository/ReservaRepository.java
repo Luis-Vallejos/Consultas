@@ -18,9 +18,8 @@ public interface ReservaRepository extends JpaRepository<Reserva, Long> {
            SELECT CASE WHEN COUNT(r) > 0 THEN TRUE ELSE FALSE END
            FROM Reserva r
            WHERE r.sala.id = :salaId
-             AND (
-                 (r.inicio < :fin AND r.fin > :inicio)
-             )
+             AND r.estado = 'CONFIRMADA'
+             AND (r.inicio < :fin AND r.fin > :inicio)
            """)
     boolean existsBySalaAndFechas(
             @Param("salaId") Long salaId,

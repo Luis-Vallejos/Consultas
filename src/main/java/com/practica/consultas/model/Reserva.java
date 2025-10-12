@@ -27,7 +27,8 @@ import lombok.ToString;
 @Entity
 @Table(name = "reservas", schema = "consultas",
         indexes = {
-            @Index(name = "idx_sala_hora", columnList = "sala_id, inicio, fin")
+            // El índice ahora debe incluir el estado para búsquedas eficientes de solapamientos
+            @Index(name = "idx_sala_hora_confirmada", columnList = "sala_id, inicio, fin, estado")
         })
 @Getter
 @Setter
@@ -50,6 +51,9 @@ public class Reserva implements Serializable {
     private LocalDateTime inicio;
 
     private LocalDateTime fin;
+
+    @Column(name = "estado", nullable = false)
+    private String estado;
 
     // Conexiones
     @ManyToOne
