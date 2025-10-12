@@ -94,13 +94,13 @@ ON DUPLICATE KEY UPDATE name=VALUES(name);
 -- 2. Insertar usuario administrador
 -- Contraseña: 'admin' (encriptada con BCrypt)
 INSERT INTO usuarios (id, nombre, correo, contrasenia)
-VALUES (1, 'Administrador', 'admin@consultas.com', '$2a$12$Abe7a0os7seO1zxhYTOtceGPGVgP6nh8YYghUxCXHrdemNXy6AHWq')
+VALUES (1, 'Administrador', 'admin@consultas.com', '$2a$12$MtVxAl7Fz3B9luQi4ACjs.pZGYh22fvIDB/OR4hi0eHDMtzLuiaw2')
 ON DUPLICATE KEY UPDATE nombre=VALUES(nombre), correo=VALUES(correo), contrasenia=VALUES(contrasenia);
 
 -- 3. Insertar usuario de prueba
 -- Contraseña: 'user' (encriptada con BCrypt)
 INSERT INTO usuarios (id, nombre, correo, contrasenia)
-VALUES (2, 'Usuario', 'user@consultas.com', '$2a$12$Abe7a0os7seO1zxhYTOtceGPGVgP6nh8YYghUxCXHrdemNXy6AHWq')
+VALUES (2, 'Usuario', 'user@consultas.com', '$2a$12$MtVxAl7Fz3B9luQi4ACjs.pZGYh22fvIDB/OR4hi0eHDMtzLuiaw2')
 ON DUPLICATE KEY UPDATE nombre=VALUES(nombre), correo=VALUES(correo), contrasenia=VALUES(contrasenia);
 
 -- 4. Asignar roles a los usuarios
