@@ -3,10 +3,6 @@ package com.practica.consultas.dto;
 import com.practica.consultas.model.Reserva;
 import java.time.LocalDateTime;
 
-/**
- * DTO para formatear la respuesta al crear o solicitar una reserva. Muestra
- * información relevante de la reserva y sus entidades asociadas.
- */
 public record ReservaDto(
         Long id,
         LocalDateTime inicio,
