@@ -27,9 +27,10 @@ public class SalaServiceImpl implements ISalaService {
     private final EquipoRepository equipoRepository;
 
     @Override
-    public Page<Sala> buscar(Integer capacidadMinima, Long equipoId, Boolean activa, Pageable pageable) {
+    // Actualizamos la firma y la lógica para usar la nueva especificación
+    public Page<Sala> buscar(Integer capacidadMinima, String tipoEquipo, Boolean activa, Pageable pageable) {
         Specification<Sala> spec = Specification.where(SalaSpecification.tieneCapacidadMinima(capacidadMinima))
-                .and(SalaSpecification.tieneEquipo(equipoId))
+                .and(SalaSpecification.conTipoDeEquipo(tipoEquipo)) // Usamos el nuevo método
                 .and(SalaSpecification.estaActiva(activa));
         return salaRepository.findAll(spec, pageable);
     }
