@@ -23,11 +23,12 @@ public class SalaController {
     @GetMapping
     public ResponseEntity<Page<SalaDto>> buscarSalas(
             @RequestParam(required = false) Integer capacidadMinima,
-            @RequestParam(required = false) Long equipoId,
+            // Cambiamos el parámetro de 'equipoId' a 'tipoEquipo'
+            @RequestParam(required = false) String tipoEquipo,
             @RequestParam(required = false) Boolean activa,
             @PageableDefault(size = 10, sort = "nombre") Pageable pageable
     ) {
-        Page<Sala> salas = salaService.buscar(capacidadMinima, equipoId, activa, pageable);
+        Page<Sala> salas = salaService.buscar(capacidadMinima, tipoEquipo, activa, pageable);
         Page<SalaDto> dtos = salas.map(SalaDto::fromEntity);
         return ResponseEntity.ok(dtos);
     }
