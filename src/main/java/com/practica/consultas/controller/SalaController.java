@@ -4,10 +4,14 @@ import com.practica.consultas.dto.SalaDto;
 import com.practica.consultas.request.SalaRequest;
 import com.practica.consultas.model.Sala;
 import com.practica.consultas.service.ISalaService;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -20,10 +24,22 @@ public class SalaController {
     @Autowired
     private ISalaService salaService;
 
+    @GetMapping("/disponibles")
+    public ResponseEntity<List<SalaDto>> buscarSalasDisponibles(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime inicio,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime fin,
+            @RequestParam(required = false) Integer capacidad,
+            @RequestParam(required = false) List<Long> equipoIds,
+            @RequestParam(required = false) Boolean activa) {
+
+        List<Sala> salas = salaService.findSalasDisponibles(inicio, fin, capacidad, equipoIds, activa);
+        List<SalaDto> dtos = salas.stream().map(SalaDto::fromEntity).collect(Collectors.toList());
+        return ResponseEntity.ok(dtos);
+    }
+
     @GetMapping
     public ResponseEntity<Page<SalaDto>> buscarSalas(
             @RequestParam(required = false) Integer capacidadMinima,
-            // Cambiamos el parámetro de 'equipoId' a 'tipoEquipo'
             @RequestParam(required = false) String tipoEquipo,
             @RequestParam(required = false) Boolean activa,
             @PageableDefault(size = 10, sort = "nombre") Pageable pageable
