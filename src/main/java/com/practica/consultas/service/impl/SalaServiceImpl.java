@@ -9,8 +9,10 @@ import com.practica.consultas.repository.specification.SalaSpecification;
 import com.practica.consultas.service.ISalaService;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -33,6 +35,11 @@ public class SalaServiceImpl implements ISalaService {
                 .and(SalaSpecification.conTipoDeEquipo(tipoEquipo)) // Usamos el nuevo método
                 .and(SalaSpecification.estaActiva(activa));
         return salaRepository.findAll(spec, pageable);
+    }
+
+    @Override
+    public List<Sala> findSalasDisponibles(LocalDateTime inicio, LocalDateTime fin, Integer capacidad, List<Long> equipoIds, Boolean activa) {
+        return salaRepository.findSalasDisponibles(inicio, fin, capacidad, equipoIds, activa);
     }
 
     @Override
