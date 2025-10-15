@@ -10,11 +10,13 @@ import com.practica.consultas.repository.SalaRepository;
 import com.practica.consultas.repository.UsuarioRepository;
 import com.practica.consultas.request.ReservaRequest;
 import com.practica.consultas.service.IReservaService;
+import com.practica.consultas.service.ISalaLockService;
 import jakarta.transaction.Transactional;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import lombok.RequiredArgsConstructor;
+import org.springframework.orm.ObjectOptimisticLockingFailureException; // <-- IMPORT CORREGIDO
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
@@ -26,35 +28,46 @@ public class ReservaServiceImpl implements IReservaService {
     private final ReservaRepository reservaRepository;
     private final SalaRepository salaRepository;
     private final UsuarioRepository usuarioRepository;
+    private final ISalaLockService salaLockService;
 
     @Override
     public Reserva crearReserva(ReservaRequest request) {
-        if (request.inicio().isAfter(request.fin()) || request.inicio().isEqual(request.fin())) {
-            throw new ReglaNegocioException("La hora de fin debe ser posterior a la hora de inicio.");
-        }
-        if (Duration.between(request.inicio(), request.fin()).toMinutes() < 30) {
-            throw new ReglaNegocioException("La duración mínima de la reserva es de 30 minutos.");
-        }
-        if (existeSolape(request.salaId(), request.inicio(), request.fin())) {
-            throw new ReglaNegocioException("La sala ya está ocupada en el horario seleccionado.");
-        }
-        Sala sala = salaRepository.findById(request.salaId())
-                .orElseThrow(() -> new ResourceNotFoundException("No se encontró la sala con id: " + request.salaId()));
-        String correoUsuario = SecurityContextHolder.getContext().getAuthentication().getName();
-        Usuario usuario = usuarioRepository.findByCorreo(correoUsuario)
-                .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado."));
+        return salaLockService.runWithLock(request.salaId(), () -> {
+            try {
+                if (request.inicio().isAfter(request.fin()) || request.inicio().isEqual(request.fin())) {
+                    throw new ReglaNegocioException("La hora de fin debe ser posterior a la hora de inicio.");
+                }
+                if (Duration.between(request.inicio(), request.fin()).toMinutes() < 30) {
+                    throw new ReglaNegocioException("La duración mínima de la reserva es de 30 minutos.");
+                }
 
-        Reserva nuevaReserva = Reserva.builder()
-                .sala(sala)
-                .usuario(usuario)
-                .inicio(request.inicio())
-                .fin(request.fin())
-                .estado("CONFIRMADA") // Estado inicial
-                .build();
+                if (existeSolape(request.salaId(), request.inicio(), request.fin())) {
+                    throw new ReglaNegocioException("La sala ya está ocupada en el horario seleccionado.");
+                }
 
-        return reservaRepository.save(nuevaReserva);
+                Sala sala = salaRepository.findById(request.salaId())
+                        .orElseThrow(() -> new ResourceNotFoundException("No se encontró la sala con id: " + request.salaId()));
+                String correoUsuario = SecurityContextHolder.getContext().getAuthentication().getName();
+                Usuario usuario = usuarioRepository.findByCorreo(correoUsuario)
+                        .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado."));
+
+                Reserva nuevaReserva = Reserva.builder()
+                        .sala(sala)
+                        .usuario(usuario)
+                        .inicio(request.inicio())
+                        .fin(request.fin())
+                        .estado("CONFIRMADA")
+                        .build();
+
+                return reservaRepository.save(nuevaReserva);
+
+            } catch (ObjectOptimisticLockingFailureException ex) {
+                throw new ReglaNegocioException("Conflicto de concurrencia. La sala fue reservada por otro usuario. Por favor, intente de nuevo.");
+            }
+        });
     }
 
+    // ... El resto del archivo no necesita cambios ...
     @Override
     public Reserva cancelarReserva(Long reservaId) {
         Reserva reserva = reservaRepository.findById(reservaId)
@@ -78,12 +91,10 @@ public class ReservaServiceImpl implements IReservaService {
             throw new ReglaNegocioException("Solo puede cancelar la reserva hasta 1 hora antes de su inicio.");
         }
 
-        // En lugar de borrar, cambiamos el estado y guardamos.
         reserva.setEstado("CANCELADA");
         return reservaRepository.save(reserva);
     }
 
-    // --- Métodos de Crud Genérico (pueden mantenerse si son necesarios en otro lugar) ---
     @Override
     public boolean existeSolape(Long salaId, LocalDateTime inicio, LocalDateTime fin) {
         return reservaRepository.existsBySalaAndFechas(salaId, inicio, fin);
