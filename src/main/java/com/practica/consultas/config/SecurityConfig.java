@@ -32,11 +32,12 @@ public class SecurityConfig {
                 .cors(cors -> cors.disable())
                 .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/auth/**").permitAll()
-                .anyRequest().authenticated() // Simplificado: cualquier otra ruta requiere autenticación.
+                .requestMatchers("/actuator/**").permitAll()
+                .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authenticationProvider(authenticationProvider()) // Registramos nuestro proveedor de autenticación.
-                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class); // ¡AQUÍ ESTÁ LA MAGIA!
+                .authenticationProvider(authenticationProvider())
+                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
