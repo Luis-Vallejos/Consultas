@@ -38,6 +38,13 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
+        <!-- Agregamos la dependencia para validaciones (ej. @Valid, @Size) -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-validation</artifactId>
+        </dependency>
+        <!-- ============================== -->
+
         <!-- Dependencia para Salud y Métricas -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
