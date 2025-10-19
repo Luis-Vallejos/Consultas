@@ -1,5 +1,6 @@
 package com.practica.consultas.service.impl;
 
+import com.practica.consultas.exceptions.ForbiddenAccessException;
 import com.practica.consultas.exceptions.ReglaNegocioException;
 import com.practica.consultas.exceptions.ResourceNotFoundException;
 import com.practica.consultas.model.Reserva;
@@ -15,9 +16,12 @@ import jakarta.transaction.Transactional;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.List;
+
 import lombok.RequiredArgsConstructor;
-import org.springframework.orm.ObjectOptimisticLockingFailureException; // <-- IMPORT CORREGIDO
-import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -31,7 +35,7 @@ public class ReservaServiceImpl implements IReservaService {
     private final ISalaLockService salaLockService;
 
     @Override
-    public Reserva crearReserva(ReservaRequest request) {
+    public Reserva crearReserva(ReservaRequest request, Authentication authentication) {
         return salaLockService.runWithLock(request.salaId(), () -> {
             try {
                 if (request.inicio().isAfter(request.fin()) || request.inicio().isEqual(request.fin())) {
@@ -47,7 +51,8 @@ public class ReservaServiceImpl implements IReservaService {
 
                 Sala sala = salaRepository.findById(request.salaId())
                         .orElseThrow(() -> new ResourceNotFoundException("No se encontró la sala con id: " + request.salaId()));
-                String correoUsuario = SecurityContextHolder.getContext().getAuthentication().getName();
+
+                String correoUsuario = authentication.getName();
                 Usuario usuario = usuarioRepository.findByCorreo(correoUsuario)
                         .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado."));
 
@@ -67,9 +72,8 @@ public class ReservaServiceImpl implements IReservaService {
         });
     }
 
-    // ... El resto del archivo no necesita cambios ...
     @Override
-    public Reserva cancelarReserva(Long reservaId) {
+    public Reserva cancelarReserva(Long reservaId, Authentication authentication) {
         Reserva reserva = reservaRepository.findById(reservaId)
                 .orElseThrow(() -> new ResourceNotFoundException("No se encontró la reserva con id: " + reservaId));
 
@@ -77,22 +81,52 @@ public class ReservaServiceImpl implements IReservaService {
             throw new ReglaNegocioException("Esta reserva ya ha sido cancelada.");
         }
 
-        var authentication = SecurityContextHolder.getContext().getAuthentication();
-        String correoUsuario = authentication.getName();
-        boolean isAdmin = authentication.getAuthorities().stream()
-                .anyMatch(grantedAuthority -> grantedAuthority.getAuthority().equals("ROLE_ADMIN"));
-        Usuario usuarioActual = usuarioRepository.findByCorreo(correoUsuario)
-                .orElseThrow(() -> new ResourceNotFoundException("Usuario actual no encontrado."));
+        verificarPermisos(reserva, authentication);
 
-        if (!isAdmin && !reserva.getUsuario().getId().equals(usuarioActual.getId())) {
-            throw new ReglaNegocioException("No tiene permisos para cancelar esta reserva.");
-        }
+        boolean isAdmin = esAdmin(authentication);
         if (!isAdmin && LocalDateTime.now().isAfter(reserva.getInicio().minusHours(1))) {
             throw new ReglaNegocioException("Solo puede cancelar la reserva hasta 1 hora antes de su inicio.");
         }
 
         reserva.setEstado("CANCELADA");
         return reservaRepository.save(reserva);
+    }
+
+    @Override
+    public Reserva obtenerReservaPorId(Long reservaId, Authentication authentication) {
+        Reserva reserva = reservaRepository.findById(reservaId)
+                .orElseThrow(() -> new ResourceNotFoundException("No se encontró la reserva con id: " + reservaId));
+        verificarPermisos(reserva, authentication);
+        return reserva;
+    }
+
+    @Override
+    public List<Reserva> obtenerReservasPorUsuario(Authentication authentication) {
+        if (esAdmin(authentication)) {
+            return reservaRepository.findAll();
+        }
+        String correoUsuario = authentication.getName();
+        Usuario usuario = usuarioRepository.findByCorreo(correoUsuario)
+                .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado."));
+        return reservaRepository.findByUsuarioId(usuario.getId());
+    }
+
+    private void verificarPermisos(Reserva reserva, Authentication authentication) {
+        String correoUsuarioLogueado = authentication.getName();
+
+        if (esAdmin(authentication)) {
+            return;
+        }
+
+        if (!reserva.getUsuario().getCorreo().equals(correoUsuarioLogueado)) {
+            throw new ForbiddenAccessException("No tiene permisos para acceder a esta reserva.");
+        }
+    }
+
+    private boolean esAdmin(Authentication authentication) {
+        return authentication.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .anyMatch(rol -> rol.equals("ROLE_ADMIN"));
     }
 
     @Override
