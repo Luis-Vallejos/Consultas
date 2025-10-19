@@ -1,16 +1,15 @@
 package com.practica.consultas.service.impl;
 
 import com.practica.consultas.dto.EquipoDto;
+import com.practica.consultas.exceptions.ResourceNotFoundException;
 import com.practica.consultas.model.Equipo;
 import com.practica.consultas.repository.EquipoRepository;
 import com.practica.consultas.request.EquipoRequest;
 import com.practica.consultas.service.IEquipoService;
-import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
-
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -72,7 +71,7 @@ public class EquipoServiceImpl implements IEquipoService {
     @Override
     public EquipoDto edit(Long id, EquipoRequest request) {
         Equipo equipo = equipoRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Equipo no encontrado con id: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("No se encontró el equipo con id: " + id));
 
         equipo.setNombre(request.nombre());
         equipo.setEstado(request.estado());
