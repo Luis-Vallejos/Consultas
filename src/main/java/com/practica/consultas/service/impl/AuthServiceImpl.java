@@ -1,5 +1,6 @@
 package com.practica.consultas.service.impl;
 
+import com.practica.consultas.exceptions.ReglaNegocioException;
 import com.practica.consultas.model.Role;
 import com.practica.consultas.model.Usuario;
 import com.practica.consultas.repository.RoleRepository;
@@ -7,50 +8,39 @@ import com.practica.consultas.repository.UsuarioRepository;
 import com.practica.consultas.service.IAuthService;
 import com.practica.consultas.utils.JwtUtil;
 import java.util.Collections;
-import org.springframework.beans.factory.annotation.Autowired;          // ✅ agregado
+import lombok.RequiredArgsConstructor;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.stereotype.Service;                     // ✅ agregado
+import org.springframework.stereotype.Service;
 
 /**
  *
  * @author Luis
  */
-@Service  // ✅ necesario para que Spring detecte e instancie este servicio
+@Service
+@RequiredArgsConstructor
 public class AuthServiceImpl implements IAuthService {
 
     private final UsuarioRepository usuarioRepository;
     private final RoleRepository roleRepository;
     private final BCryptPasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
-
-    // ✅ Marca explícitamente el constructor como @Autowired para inyección por constructor
-    @Autowired
-    public AuthServiceImpl(
-            UsuarioRepository usuarioRepository,
-            RoleRepository roleRepository,
-            BCryptPasswordEncoder passwordEncoder,
-            JwtUtil jwtUtil
-    ) {
-        this.usuarioRepository = usuarioRepository;
-        this.roleRepository = roleRepository;
-        this.passwordEncoder = passwordEncoder;
-        this.jwtUtil = jwtUtil;
-    }
+    private final AuthenticationManager authenticationManager;
 
     @Override
     public Usuario register(String correo, String password, String nombre) {
-        // ✅ Cambié .isPresent() -> .isEmpty() para mayor claridad semántica
         if (usuarioRepository.findByCorreo(correo).isPresent()) {
-            throw new RuntimeException("El correo ya está registrado.");
+            throw new ReglaNegocioException("El correo ya está registrado.");
         }
 
         Role roleUser = roleRepository.findByName("ROLE_USER")
-                .orElseThrow(() -> new RuntimeException("No existe el rol USER"));
+                .orElseThrow(() -> new RuntimeException("Error de configuración: No existe el rol USER"));
 
-        // ✅ Asegúrate de que tu entidad Usuario tenga builder y nombres de campos correctos
         Usuario usuario = Usuario.builder()
                 .correo(correo)
-                .contrasenia(passwordEncoder.encode(password)) // asegúrate que el campo se llama igual
+                .contrasenia(passwordEncoder.encode(password))
                 .nombre(nombre)
                 .roles(Collections.singleton(roleUser))
                 .build();
@@ -60,12 +50,12 @@ public class AuthServiceImpl implements IAuthService {
 
     @Override
     public String login(String correo, String password) {
-        Usuario usuario = usuarioRepository.findByCorreo(correo)
-                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+        Authentication authentication = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(correo, password)
+        );
 
-        if (!passwordEncoder.matches(password, usuario.getContrasenia())) {
-            throw new RuntimeException("Contraseña incorrecta");
-        }
+        Usuario usuario = usuarioRepository.findByCorreo(correo)
+                .orElseThrow(() -> new ReglaNegocioException("Usuario no encontrado tras una autenticación exitosa."));
 
         return jwtUtil.generateToken(usuario);
     }
