@@ -1,5 +1,6 @@
 package com.practica.consultas.service.impl;
 
+import com.practica.consultas.exceptions.ResourceNotFoundException;
 import com.practica.consultas.request.SalaRequest;
 import com.practica.consultas.model.Equipo;
 import com.practica.consultas.model.Sala;
@@ -7,7 +8,6 @@ import com.practica.consultas.repository.EquipoRepository;
 import com.practica.consultas.repository.SalaRepository;
 import com.practica.consultas.repository.specification.SalaSpecification;
 import com.practica.consultas.service.ISalaService;
-import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -29,10 +29,9 @@ public class SalaServiceImpl implements ISalaService {
     private final EquipoRepository equipoRepository;
 
     @Override
-    // Actualizamos la firma y la lógica para usar la nueva especificación
     public Page<Sala> buscar(Integer capacidadMinima, String tipoEquipo, Boolean activa, Pageable pageable) {
         Specification<Sala> spec = Specification.where(SalaSpecification.tieneCapacidadMinima(capacidadMinima))
-                .and(SalaSpecification.conTipoDeEquipo(tipoEquipo)) // Usamos el nuevo método
+                .and(SalaSpecification.conTipoDeEquipo(tipoEquipo))
                 .and(SalaSpecification.estaActiva(activa));
         return salaRepository.findAll(spec, pageable);
     }
@@ -61,7 +60,7 @@ public class SalaServiceImpl implements ISalaService {
     @Override
     public Sala actualizar(Long id, SalaRequest salaRequest) {
         Sala sala = salaRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Sala no encontrada con id: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Sala no encontrada con id: " + id));
 
         sala.setNombre(salaRequest.nombre());
         sala.setCapacidad(salaRequest.capacidad());
