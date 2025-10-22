@@ -1,99 +1,114 @@
-Sistema de Reserva de Salas - API
+Perfecto 👍 Aquí tienes tu **README** completamente formateado en **Markdown**, listo para subirlo a GitHub:
 
-API RESTful para la gestión y reserva de salas de reuniones, desarrollada con Spring Boot, Spring Security, JWT y MySQL.
+---
 
-Características Principales
+# 🏢 Sistema de Reserva de Salas - API
 
-Autenticación y Autorización: Sistema seguro basado en roles (ADMIN, USER) utilizando JWT.
+API RESTful para la **gestión y reserva de salas de reuniones**, desarrollada con **Spring Boot**, **Spring Security**, **JWT** y **MySQL**.
 
-Gestión de Salas (CRUD): Creación, lectura, actualización y eliminación de salas (protegido para ADMIN).
+---
 
-Gestión de Equipos (CRUD): Administración del equipamiento disponible en las salas (protegido para ADMIN).
+## 🚀 Características Principales
 
-Sistema de Reservas: Los usuarios autenticados pueden crear, cancelar y ver sus reservas.
+* 🔐 **Autenticación y Autorización:** Sistema seguro basado en roles (`ADMIN`, `USER`) utilizando JWT.
+* 🏠 **Gestión de Salas (CRUD):** Creación, lectura, actualización y eliminación de salas (protegido para ADMIN).
+* 💻 **Gestión de Equipos (CRUD):** Administración del equipamiento disponible en las salas (protegido para ADMIN).
+* 📅 **Sistema de Reservas:** Los usuarios autenticados pueden crear, cancelar y ver sus reservas.
+* 🔎 **Búsqueda Avanzada:** Filtra salas disponibles por fecha, capacidad y equipamiento.
+* ⚙️ **Concurrencia:** Mecanismo de bloqueo para evitar reservas simultáneas en la misma sala.
+* 🗄️ **Base de Datos:** Persistencia con **MySQL** y migraciones gestionadas por **Flyway**.
+* 🐳 **Contenerización:** Totalmente dockerizado para un despliegue y desarrollo sencillos con **Docker Compose**.
 
-Búsqueda Avanzada: Filtra salas disponibles por fecha, capacidad y equipamiento.
+---
 
-Concurrencia: Mecanismo de bloqueo para evitar reservas simultáneas en la misma sala.
-
-Base de Datos: Persistencia de datos con MySQL y migraciones gestionadas por Flyway.
-
-Contenerización: Totalmente dockerizado para un despliegue y desarrollo sencillos con Docker Compose.
-
-Guía de Inicio Rápido (5 minutos)
+## 🧭 Guía de Inicio Rápido (5 minutos)
 
 Sigue estos pasos para tener el proyecto corriendo localmente usando Docker.
 
-Pre-requisitos
+### 🧩 Pre-requisitos
 
-Docker
+* Docker
+* Docker Compose
+* Java 17+
+* Maven 3.8+
 
-Docker Compose
+---
 
-Java 17+
+### 🪄 Pasos
 
-Maven 3.8+
+#### 1️⃣ Clonar el Repositorio
 
-Pasos
-
-1. Clonar el Repositorio
-
+```bash
 git clone https://github.com/luis-vallejos/Consultas.git
 cd Consultas
+```
 
+#### 2️⃣ Empaquetar la Aplicación
 
-2. Empaquetar la Aplicación
+Compila el código, ejecuta las pruebas y crea el archivo `.jar` que se usará en Docker.
 
-Este comando compila el código, ejecuta las pruebas y crea el archivo .jar que se usará en el contenedor Docker.
-
+```bash
 ./mvnw clean package -DskipTests
+```
 
+#### 3️⃣ Levantar los Servicios con Docker Compose
 
-3. Levantar los Servicios con Docker Compose
+Construye la imagen y levanta los contenedores (API y MySQL).
 
-Este único comando construirá la imagen de la aplicación y levantará dos contenedores: uno para la API (app) y otro para la base de datos MySQL (db).
-
+```bash
 docker-compose up --build
+```
 
+✅ **Listo:**
+La base de datos se iniciará, Flyway aplicará las migraciones y la aplicación estará disponible en:
 
-¡Y listo! La base de datos se iniciará, Flyway aplicará las migraciones y la aplicación estará disponible.
+* **API URL:** [http://localhost:8080](http://localhost:8080)
+* **Endpoint de Salud:** [http://localhost:8080/actuator/health](http://localhost:8080/actuator/health) → `{"status":"UP"}`
 
-API URL: http://localhost:8080
+---
 
-Endpoint de Salud: http://localhost:8080/actuator/health (debería responder {"status":"UP"}).
+### 🛑 Detener la Aplicación
 
-Detener la Aplicación
+Presiona `Ctrl + C` donde se ejecutó Docker y luego:
 
-Para detener y eliminar los contenedores, presiona Ctrl + C en la terminal donde ejecutaste docker-compose up y luego ejecuta:
-
+```bash
 docker-compose down
+```
 
+---
 
-Documentación de la API
+## 📘 Documentación de la API
 
-La API sigue un diseño RESTful estándar. Todas las respuestas son en formato JSON.
+La API sigue un diseño **RESTful** estándar.
+Todas las respuestas son en formato **JSON**.
 
-Autenticación
+---
 
-Todas las rutas (excepto /api/auth/**) requieren un Token JWT en la cabecera de autorización.
+### 🔐 Autenticación
 
+Todas las rutas (excepto `/api/auth/**`) requieren un **Token JWT** en la cabecera:
+
+```
 Authorization: Bearer <TU_TOKEN_JWT>
+```
 
-POST /api/auth/register
+#### 📤 POST /api/auth/register
 
-Registra un nuevo usuario en el sistema.
+Registra un nuevo usuario.
 
-Body (Request):
+**Body (Request):**
 
+```json
 {
   "nombre": "Carlos Ruiz",
   "correo": "carlos.ruiz@example.com",
   "password": "password123"
 }
+```
 
+**Response (201 Created):**
 
-Response (201 Created):
-
+```json
 {
   "id": 4,
   "nombre": "Carlos Ruiz",
@@ -101,45 +116,49 @@ Response (201 Created):
   "contrasenia": "$2a$10$...",
   "roles": [{"id": 2, "name": "ROLE_USER"}]
 }
+```
 
+---
 
-POST /api/auth/login
+#### 🔑 POST /api/auth/login
 
-Autentica a un usuario y devuelve un token JWT.
+Autentica un usuario y devuelve un token JWT.
 
-Body (Request):
+**Body (Request):**
 
+```json
 {
   "correo": "admin@consultas.com",
   "password": "admin"
 }
+```
 
+**Response (200 OK):**
 
-Response (200 OK):
-
+```json
 {
   "token": "eyJhbGciOiJIUzI1NiJ9..."
 }
+```
 
+---
 
-Salas
+## 🏠 Salas
 
-GET /api/salas
+#### 📥 GET /api/salas
 
-Busca y lista todas las salas con paginación.
+Lista todas las salas con paginación.
 
-Query Params (Opcionales):
+**Query Params (opcionales):**
 
-capacidadMinima (int): Filtra por capacidad mínima.
+* `capacidadMinima` *(int)* — Filtra por capacidad mínima
+* `tipoEquipo` *(string)* — Filtra por tipo de equipo
+* `activa` *(boolean)* — Filtra por salas activas/inactivas
+* `page`, `size`, `sort` — Paginación estándar de Spring Data
 
-tipoEquipo (string): Filtra por tipo de equipo disponible.
+**Response (200 OK):**
 
-activa (boolean): Filtra por salas activas o inactivas.
-
-page, size, sort: Parámetros de paginación de Spring Data.
-
-Response (200 OK):
-
+```json
 {
   "content": [
     {
@@ -155,35 +174,41 @@ Response (200 OK):
   "totalElements": 1,
   "number": 0
 }
+```
 
+---
 
-GET /api/salas/disponibles
+#### 🕓 GET /api/salas/disponibles
 
-Busca salas disponibles en un rango de fechas y con filtros adicionales.
+Busca salas disponibles en un rango de fechas.
 
-Query Params (Obligatorios):
+**Query Params (obligatorios):**
 
-inicio (string): Fecha y hora de inicio en formato ISO (YYYY-MM-DDTHH:mm:ss).
+* `inicio`: Fecha/hora inicio (ISO: `YYYY-MM-DDTHH:mm:ss`)
+* `fin`: Fecha/hora fin (ISO)
 
-fin (string): Fecha y hora de fin en formato ISO.
+**Opcionales:**
 
-Query Params (Opcionales):
+* `capacidad` *(int)*
+* `equipoIds` *(long[])*
 
-capacidad (int): Capacidad mínima requerida.
+**Ejemplo:**
 
-equipoIds (long[]): Lista de IDs de equipos requeridos.
-
-Ejemplo de Petición:
+```
 GET /api/salas/disponibles?inicio=2025-12-01T10:00:00&fin=2025-12-01T12:00:00&capacidad=5
+```
 
-Response (200 OK): Lista de SalaDto
+**Response (200 OK):** Lista de `SalaDto`.
 
-POST /api/salas
+---
 
-Crea una nueva sala. (Requiere rol ADMIN)
+#### ➕ POST /api/salas
 
-Body (Request):
+Crea una nueva sala (**rol ADMIN requerido**).
 
+**Body (Request):**
+
+```json
 {
   "nombre": "Sala de Innovación",
   "capacidad": 20,
@@ -191,55 +216,61 @@ Body (Request):
   "activa": true,
   "equipoIds": [1, 3]
 }
+```
 
+**Response (200 OK):** `SalaDto` creada.
 
-Response (200 OK): SalaDto de la sala creada.
+---
 
-Reservas
+## 📅 Reservas
 
-POST /api/reservas
+#### ➕ POST /api/reservas
 
-Crea una nueva reserva para el usuario autenticado.
+Crea una nueva reserva.
 
-Body (Request):
+**Body (Request):**
 
+```json
 {
   "salaId": 1,
   "inicio": "2025-12-25T14:00:00",
   "fin": "2025-12-25T15:30:00"
 }
+```
 
+**Response (201 Created):** `ReservaDto` creada.
 
-Response (201 Created): ReservaDto de la reserva creada.
+---
 
-GET /api/reservas
+#### 📄 GET /api/reservas
 
-Obtiene la lista de reservas del usuario autenticado. Si el usuario es ADMIN, obtiene todas las reservas.
+Obtiene las reservas del usuario autenticado (ADMIN ve todas).
 
-Response (200 OK): Lista de ReservaDto
+**Response (200 OK):** Lista de `ReservaDto`.
 
-PUT /api/reservas/{id}/cancelar
+---
+
+#### ❌ PUT /api/reservas/{id}/cancelar
 
 Cancela una reserva existente.
 
-Response (200 OK): ReservaDto con el estado "CANCELADA".
+**Response (200 OK):** `ReservaDto` con estado `"CANCELADA"`.
 
-Historial de Cambios
+---
 
-Versión 1.0.0 (2025-10-21)
+## 🕓 Historial de Cambios
 
-🎉 Lanzamiento inicial del proyecto.
+### 🧩 Versión 1.0.0 (2025-10-21)
 
-Funcionalidades:
+🎉 **Lanzamiento inicial del proyecto**
 
-Módulos completos de Autenticación, Salas, Equipos y Reservas.
+**Incluye:**
 
-Soporte para roles de ADMIN y USER.
+* Módulos completos de Autenticación, Salas, Equipos y Reservas
+* Roles de `ADMIN` y `USER`
+* Búsqueda avanzada de salas
+* Configuración Docker para despliegue rápido
+* Migraciones con Flyway
+* Pruebas unitarias y de integración (smoke test)
 
-Búsqueda de salas disponibles con filtros.
-
-Configuración de Docker para despliegue fácil.
-
-Migraciones de base de datos con Flyway.
-
-Pruebas unitarias y de integración (smoke test).
+---
