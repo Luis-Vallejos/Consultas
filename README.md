@@ -1,5 +1,3 @@
-Perfecto 👍 Aquí tienes tu **README** completamente formateado en **Markdown**, listo para subirlo a GitHub:
-
 ---
 
 # 🏢 Sistema de Reserva de Salas - API
