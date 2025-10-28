@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+    <!-- 
+      FRAGMENTO: head
+      Este fragmento define el <head> base para todas las páginas.
+      Incluye Metatags, Bootstrap 5 CSS y un título por defecto.
+      
+      NOTA: Se movió el th:fragment aquí para mejorar la validación del IDE.
+    -->
+    <head th:fragment="head (pageTitle)">
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+        <!-- Título de la página (se puede cambiar desde la página que lo usa) -->
+        <title th:text="${pageTitle} + ' - Sistema de Reservas'">Sistema de Reservas</title>
+
+        <!-- PASO 4: Inclusión de Bootstrap 5 CSS (¡Corregido!) -->
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" 
+              rel="stylesheet" 
+              xintegrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" 
+              crossorigin="anonymous">
+
+        <!-- (Opcional) Estilos personalizados que puedes crear más tarde -->
+        <!-- <link rel="stylesheet" th:href="@{/css/styles.css}"> -->
+    </head>
+    <body class="d-flex flex-column min-vh-100">
+
+        <!-- 
+          FRAGMENTO: header
+          Este fragmento define el menú de navegación (navbar) de Bootstrap.
+          Será incluido en todas las páginas.
+        -->
+        <header th:fragment="header">
+            <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm">
+                <div class="container">
+                    <a class="navbar-brand" th:href="@{/}">🏢 Gestor de Salas</a>
+                    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                        <span class="navbar-toggler-icon"></span>
+                    </button>
+                    <div class="collapse navbar-collapse" id="navbarNav">
+                        <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+                            <li class="nav-item">
+                                <a class="nav-link active" aria-current="page" th:href="@{/}">Inicio</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="#">Mis Reservas</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="#">Buscar Salas</a>
+                            </li>
+                            <li class="nav-item">
+                                <!-- Más adelante, esto cambiará si el usuario está logueado -->
+                                <!-- ASEGÚRATE DE QUE ESTA LÍNEA ESTÉ ASÍ: -->
+                                <a class="nav-link" th:href="@{/login}">Login</a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </nav>
+        </header>
+
+        <!-- 
+          CONTENIDO PRINCIPAL
+          Este es el contenedor donde cada página insertará su propio contenido.
+          No es un fragmento, sino el contenedor principal.
+        -->
+        <main class="container flex-grow-1 my-4">
+            <!-- El contenido de la página específica irá aquí -->
+        </main>
+
+        <!-- 
+          FRAGMENTO: footer
+          Este fragmento define el pie de página.
+          Será incluido en todas las páginas.
+        -->
+        <footer th:fragment="footer" class="bg-dark text-white text-center p-3 mt-auto">
+            <div class="container">
+                <p class="mb-0">&copy; 2025 Sistema de Reservas. Todos los derechos reservados.</p>
+            </div>
+        </footer>
+
+        <!-- 
+          FRAGMENTO: scripts
+          Este fragmento incluye el Javascript de Bootstrap.
+          Debe ir al final del <body>.
+          
+          NOTA: Se cambió de <th:block> a <div> para mejorar la validación del IDE.
+        -->
+        <div th:fragment="scripts">
+            <!-- PASO 4: Inclusión de Bootstrap 5 JS (Bundle) (¡Corregido!) -->
+            <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" 
+                    xintegrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" 
+            crossorigin="anonymous"></script>
+        </div>
+
+    </body>
+</html>
+
+
+
