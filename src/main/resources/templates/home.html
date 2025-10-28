@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+
+    <!-- 
+      PASO 1: (CORREGIDO)
+      Cambiamos la ruta de "layout/layout" a solo "layout",
+      ya que ambos archivos están en la misma carpeta (templates/).
+    -->
+    <head th:replace="~{layout :: head('Inicio')}">
+        <!-- Este contenido es solo un placeholder para el diseñador/IDE -->
+        <!-- Será completamente reemplazado por Thymeleaf -->
+        <title>Cargando...</title>
+        <meta charset="UTF-8">
+    </head>
+
+    <body class="d-flex flex-column min-vh-100">
+
+        <!-- 
+          PASO 2: (CORREGIDO)
+          Cambiamos la ruta a "layout"
+        -->
+        <header th:replace="~{layout :: header}"></header>
+
+        <!-- 
+          PASO 3: Contenido principal específico de ESTA página 
+        -->
+        <main class="container flex-grow-1 my-4">
+            <div class="p-5 mb-4 bg-light rounded-3 shadow-sm">
+                <div class="container-fluid py-5">
+                    <h1 class="display-5 fw-bold">¡Bienvenido al Sistema de Reservas!</h1>
+                    <p class="col-md-8 fs-4">
+                        Tu backend está listo. Esta es tu nueva página de inicio servida con Spring Boot y Thymeleaf.
+                    </p>
+                    <p>Hemos configurado exitosamente:</p>
+                    <ul>
+                        <li>Spring Boot con Thymeleaf.</li>
+                        <li>Una plantilla base (`layout.html`) con menú y footer.</li>
+                        <li>Bootstrap 5 para los estilos.</li>
+                        <li>Esta página (`home.html`) que hereda de la plantilla.</li>
+                    </ul>
+                    <button class="btn btn-primary btn-lg" type="button">Buscar Salas</button>
+                </div>
+            </div>
+        </main>
+
+        <!-- 
+          PASO 4: (CORREGIDO)
+          Cambiamos la ruta a "layout"
+        -->
+        <footer th:replace="~{layout :: footer}"></footer>
+
+        <!-- 
+          PASO 5: (CORREGIDO)
+          Cambiamos la ruta a "layout"
+        -->
+    <th:block th:replace="~{layout :: scripts}"></th:block>
+
+</body>
+</html>
+
