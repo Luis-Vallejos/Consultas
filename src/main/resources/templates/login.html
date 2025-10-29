@@ -15,13 +15,8 @@
                         <div class="card-body p-4 p-md-5">
                             <h2 class="card-title text-center mb-4">Iniciar Sesión</h2>
 
-                            <!-- 
-                              CAMBIO: Le dimos un 'action' que apunta a la API de login.
-                              Usamos th:action para construir la URL correctamente.
-                            -->
                             <form id="loginForm" th:action="@{/api/auth/login}" method="post">
 
-                                <!-- Div para mostrar mensajes de error -->
                                 <div id="error-message" class="alert alert-danger d-none" role="alert">
                                     Correo o contraseña incorrectos.
                                 </div>
@@ -41,7 +36,8 @@
                                 </div>
 
                                 <p class="text-center mt-3">
-                                    ¿No tienes una cuenta? <a href="#">Regístrate</a>
+
+                                    ¿No tienes una cuenta? <a th:href="@{/register}">Regístrate</a>
                                 </p>
                             </form>
                         </div>
@@ -54,67 +50,47 @@
 
     <th:block th:replace="~{layout/layout :: scripts}"></th:block>
 
-    <!-- ================================================== -->
-    <!--           NUEVO SCRIPT DE JAVASCRIPT             -->
-    <!-- ================================================== -->
     <script>
-        // 1. Esperar a que toda la página esté cargada
         document.addEventListener("DOMContentLoaded", function () {
 
-            // 2. Obtener el formulario por su ID
             const loginForm = document.getElementById("loginForm");
             const errorMessage = document.getElementById("error-message");
 
-            // 3. Añadir un "oyente" para el evento 'submit' (cuando se pulsa "Entrar")
             loginForm.addEventListener("submit", function (event) {
 
-                // 4. Prevenir que el formulario se envíe de la forma tradicional (recargando la página)
                 event.preventDefault();
 
-                // 5. Ocultar errores previos
                 errorMessage.classList.add("d-none");
 
-                // 6. Obtener los datos del formulario
                 const correo = document.getElementById("correo").value;
                 const password = document.getElementById("password").value;
-                const actionUrl = loginForm.getAttribute("action"); // Obtiene la URL: /api/auth/login
-
-                // 7. Enviar los datos a la API usando 'fetch' (AJAX)
+                const actionUrl = loginForm.getAttribute("action");
                 fetch(actionUrl, {
                     method: "POST",
                     headers: {
-                        // Le decimos a tu backend que estamos enviando datos en formato JSON
                         "Content-Type": "application/json"
                     },
-                    // Convertimos los datos de JS a un string JSON que tu backend espera
                     body: JSON.stringify({
                         correo: correo,
                         password: password
                     })
                 })
                         .then(response => {
-                            // 8. Comprobar si la respuesta del backend fue exitosa (ej. 200 OK)
                             if (response.ok) {
-                                return response.json(); // Convertir la respuesta JSON a un objeto JS
+                                return response.json();
                             } else {
-                                // Si falla (ej. 401 Unauthorized), lanzamos un error
                                 throw new Error("Error en la autenticación");
                             }
                         })
                         .then(data => {
-                            // 9. ÉXITO: El backend nos devolvió el token
                             console.log("Token recibido:", data.token);
 
-                            // 10. Guardamos el token en el almacenamiento local del navegador
                             localStorage.setItem("jwtToken", data.token);
 
-                            // 11. Redirigimos al usuario a la página de inicio
-                            window.location.href = "/"; // Redirige a http://localhost:8080/
+                            window.location.href = "/";
                         })
                         .catch(error => {
-                            // 12. ERROR: Algo salió mal (ej. contraseña incorrecta)
                             console.error("Error en el login:", error);
-                            // Mostramos el mensaje de error
                             errorMessage.classList.remove("d-none");
                         });
             });
