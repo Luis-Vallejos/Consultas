@@ -1,29 +1,15 @@
 <!DOCTYPE html>
 <html lang="es" xmlns:th="http://www.thymeleaf.org">
 
-    <!-- 
-      PASO 1: (CORREGIDO)
-      Cambiamos la ruta de "layout/layout" a solo "layout",
-      ya que ambos archivos están en la misma carpeta (templates/).
-    -->
-    <head th:replace="~{layout :: head('Inicio')}">
-        <!-- Este contenido es solo un placeholder para el diseñador/IDE -->
-        <!-- Será completamente reemplazado por Thymeleaf -->
+    <head th:replace="~{layout/layout :: head('Inicio')}">
         <title>Cargando...</title>
         <meta charset="UTF-8">
     </head>
 
     <body class="d-flex flex-column min-vh-100">
 
-        <!-- 
-          PASO 2: (CORREGIDO)
-          Cambiamos la ruta a "layout"
-        -->
-        <header th:replace="~{layout :: header}"></header>
+        <header th:replace="~{layout/layout :: header}"></header>
 
-        <!-- 
-          PASO 3: Contenido principal específico de ESTA página 
-        -->
         <main class="container flex-grow-1 my-4">
             <div class="p-5 mb-4 bg-light rounded-3 shadow-sm">
                 <div class="container-fluid py-5">
@@ -43,18 +29,9 @@
             </div>
         </main>
 
-        <!-- 
-          PASO 4: (CORREGIDO)
-          Cambiamos la ruta a "layout"
-        -->
-        <footer th:replace="~{layout :: footer}"></footer>
+        <footer th:replace="~{layout/layout :: footer}"></footer>
 
-        <!-- 
-          PASO 5: (CORREGIDO)
-          Cambiamos la ruta a "layout"
-        -->
-    <th:block th:replace="~{layout :: scripts}"></th:block>
+    <th:block th:replace="~{layout/layout :: scripts}"></th:block>
 
 </body>
 </html>
-
