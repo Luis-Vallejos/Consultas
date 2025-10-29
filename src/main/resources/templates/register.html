@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+
+    <head th:replace="~{layout/layout :: head('Registrar Usuario')}">
+    </head>
+
+    <body class="d-flex flex-column min-vh-100">
+
+        <header th:replace="~{layout/layout :: header}"></header>
+
+        <main class="container flex-grow-1 my-4">
+            <div class="row justify-content-center">
+                <div class="col-md-6 col-lg-5">
+                    <div class="card shadow-sm border-0">
+                        <div class="card-body p-4 p-md-5">
+                            <h2 class="card-title text-center mb-4">Crear Cuenta</h2>
+
+                            <form id="registerForm" th:action="@{/api/auth/register}" method="post">
+
+                                <div id="error-message" class="alert alert-danger d-none" role="alert">
+                                    Error por defecto.
+                                </div>
+                                <div id="success-message" class="alert alert-success d-none" role="alert">
+                                    ¡Registro exitoso! Redirigiendo al login...
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="nombre" class="form-label">Nombre Completo</label>
+                                    <input type="text" class="form-control" id="nombre" name="nombre" required>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="correo" class="form-label">Correo Electrónico</label>
+                                    <input type="email" class="form-control" id="correo" name="correo" required>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="password" class="form-label">Contraseña</label>
+                                    <input type="password" class="form-control" id="password" name="password" required>
+                                    <div class="form-text">Mínimo 6 caracteres.</div>
+                                </div>
+
+                                <div class="d-grid">
+                                    <button type="submit" class="btn btn-primary btn-lg">Crear Cuenta</button>
+                                </div>
+
+                                <p class="text-center mt-3">
+                                    <a th:href="@{/login}">¿Ya tienes una cuenta? Inicia Sesión</a>
+                                </p>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <footer th:replace="~{layout/layout :: footer}"></footer>
+
+    <th:block th:replace="~{layout/layout :: scripts}"></th:block>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const registerForm = document.getElementById("registerForm");
+            const errorMessage = document.getElementById("error-message");
+            const successMessage = document.getElementById("success-message");
+
+            registerForm.addEventListener("submit", function (event) {
+                event.preventDefault();
+
+                errorMessage.classList.add("d-none");
+                successMessage.classList.add("d-none");
+
+                const nombre = document.getElementById("nombre").value;
+                const correo = document.getElementById("correo").value;
+                const password = document.getElementById("password").value;
+                const actionUrl = registerForm.getAttribute("action");
+
+                fetch(actionUrl, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        nombre: nombre,
+                        correo: correo,
+                        password: password
+                    })
+                })
+                        .then(response => {
+                            if (!response.ok) {
+                                return response.json().then(errorData => {
+                                    throw new Error(errorData.message || "Error en el registro.");
+                                });
+                            }
+                            return response.json();
+                        })
+                        .then(data => {
+                            console.log("Usuario registrado:", data);
+
+                            successMessage.classList.remove("d-none");
+
+                            setTimeout(() => {
+                                window.location.href = "/login";
+                            }, 2000);
+                        })
+                        .catch(error => {
+                            console.error("Error en el registro:", error);
+                            errorMessage.textContent = error.message;
+                            errorMessage.classList.remove("d-none");
+                        });
+            });
+        });
+    </script>
+
+</body>
+</html>
+
