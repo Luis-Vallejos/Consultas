@@ -12,6 +12,9 @@
               xintegrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" 
               crossorigin="anonymous">
 
+        <!-- Iconos de Bootstrap -->
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
     </head>
     <body class="d-flex flex-column min-vh-100">
 
@@ -25,13 +28,19 @@
                     <div class="collapse navbar-collapse" id="navbarNav">
                         <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
                             <li class="nav-item">
-                                <a class="nav-link active" aria-current="page" th:href="@{/}">Inicio</a>
+                                <a class="nav-link" aria-current="page" th:href="@{/}">Inicio</a>
                             </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="#">Mis Reservas</a>
+                            <!-- Enlace "Buscar Salas" (catálogo) -->
+                            <li class="nav-item" id="nav-salas-li" style="display: none;">
+                                <a class="nav-link" th:href="@{/salas}">Salas</a>
                             </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="#">Buscar Salas</a>
+                            <!-- Enlace "Buscar Disponibilidad" -->
+                            <li class="nav-item" id="nav-buscar-li" style="display: none;">
+                                <a class="nav-link" th:href="@{/buscar}">Buscar</a>
+                            </li>
+                            <!-- Enlace "Mis Reservas" (Actualizado) -->
+                            <li class="nav-item" id="nav-mis-reservas-li" style="display: none;">
+                                <a class="nav-link" th:href="@{/mis-reservas}">Mis Reservas</a>
                             </li>
 
                             <li class="nav-item" id="login-link-li">
@@ -50,6 +59,7 @@
         </header>
 
         <main class="container flex-grow-1 my-4">
+            <!-- El contenido principal de cada página se insertará aquí -->
         </main>
 
         <footer th:fragment="footer" class="bg-dark text-white text-center p-3 mt-auto">
@@ -63,6 +73,7 @@
                     xintegrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" 
             crossorigin="anonymous"></script>
 
+            <!-- Script de autenticación del Layout -->
             <script>
                 document.addEventListener("DOMContentLoaded", function () {
                     const token = localStorage.getItem("jwtToken");
@@ -71,14 +82,32 @@
                     const logoutLi = document.getElementById("logout-link-li");
                     const logoutLink = document.getElementById("logout-link");
 
+                    // --- NUEVOS ENLACES DE NAVEGACIÓN ---
+                    const navMisReservas = document.getElementById("nav-mis-reservas-li");
+                    const navBuscar = document.getElementById("nav-buscar-li");
+                    const navSalas = document.getElementById("nav-salas-li");
+
+
                     if (token) {
+                        // Ocultar Login/Registro
                         loginLi.style.display = "none";
                         registerLi.style.display = "none";
+
+                        // Mostrar enlaces de usuario y Logout
                         logoutLi.style.display = "block";
+                        navMisReservas.style.display = "block";
+                        navBuscar.style.display = "block";
+                        navSalas.style.display = "block";
                     } else {
+                        // Mostrar Login/Registro
                         loginLi.style.display = "block";
                         registerLi.style.display = "block";
+
+                        // Ocultar enlaces de usuario y Logout
                         logoutLi.style.display = "none";
+                        navMisReservas.style.display = "none";
+                        navBuscar.style.display = "none";
+                        navSalas.style.display = "none";
                     }
 
                     logoutLink.addEventListener("click", function (event) {
@@ -86,10 +115,35 @@
                         localStorage.removeItem("jwtToken");
                         window.location.href = "/login";
                     });
+
+                    // --- Lógica para marcar el enlace activo ---
+                    // (Esto reemplaza el 'active' estático en el <li> de Inicio)
+                    const navLinks = document.querySelectorAll('#navbarNav .nav-link');
+                    const currentPath = window.location.pathname;
+
+                    navLinks.forEach(link => {
+                        // Eliminar 'active' de todos
+                        link.classList.remove('active');
+
+                        // Añadir 'active' al enlace que coincide con la ruta actual
+                        // Se usa startsWith para que /salas también active /salas?id=1 (aunque no es el caso aquí)
+                        if (link.getAttribute('href') === currentPath) {
+                            link.classList.add('active');
+                            // Opcional: añadir 'active' también al <li> padre si es necesario
+                            // link.closest('.nav-item').classList.add('active'); 
+                        }
+                    });
+
+                    // Caso especial para la raíz '/'
+                    if (currentPath === '/') {
+                        const homeLink = document.querySelector('a[href="/"]');
+                        if (homeLink)
+                            homeLink.classList.add('active');
+                    }
+
                 });
             </script>
         </div>
 
     </body>
 </html>
-

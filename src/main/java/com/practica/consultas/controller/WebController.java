@@ -20,4 +20,24 @@ public class WebController {
     public String showRegisterPage() {
         return "register";
     }
+
+    @GetMapping("/salas")
+    public String showSalasPage() {
+        return "salas";
+    }
+
+    @GetMapping("/buscar")
+    public String showSearchPage() {
+        return "buscar";
+    }
+
+    @GetMapping("/sala-detalle")
+    public String showSalaDetallePage() {
+        return "sala-detalle";
+    }
+
+    @GetMapping("/mis-reservas")
+    public String showMisReservasPage() {
+        return "mis-reservas";
+    }
 }

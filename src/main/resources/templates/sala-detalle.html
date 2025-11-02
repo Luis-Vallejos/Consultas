@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+
+    <head th:replace="~{layout/layout :: head('Detalle de Sala')}">
+    </head>
+
+    <body class="d-flex flex-column min-vh-100">
+
+        <header th:replace="~{layout/layout :: header}"></header>
+
+        <main class="container flex-grow-1 my-4">
+
+            <div id="sala-detalle-container">
+
+                <div id="loading-spinner" class="text-center my-5">
+                    <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status">
+                        <span class="visually-hidden">Cargando...</span>
+                    </div>
+                    <h3 class="mt-3">Cargando detalles de la sala...</h3>
+                </div>
+
+                <div id="error-message" class="alert alert-danger d-none" role="alert">
+                    Error al cargar la sala.
+                </div>
+
+                <div id="sala-content" class="d-none">
+                    <div class="row">
+                        <div class="col-lg-8">
+                            <div class="card shadow-sm border-0">
+                                <div class="card-body p-4">
+                                    <div class="d-flex justify-content-between align-items-start mb-3">
+                                        <h1 class="display-5 fw-bold" id="sala-nombre">Nombre de la Sala</h1>
+                                        <span id="sala-estado" class_D="badge fs-5"></span>
+                                    </div>
+
+                                    <h4 class="text-muted fw-normal mb-4">
+                                        <i class="bi bi-geo-alt-fill me-2"></i>
+                                        <span id="sala-ubicacion"></span>
+                                    </h4>
+
+                                    <p class="fs-4">
+                                        <i class="bi bi-people-fill me-2"></i>
+                                        Capacidad para <strong><span id="sala-capacidad"></span> personas</strong>.
+                                    </p>
+
+                                    <hr>
+
+                                    <h3>Equipamiento Incluido</h3>
+                                    <div id="sala-equipos" class="row g-3 mt-2">
+                                    </div>
+
+                                    <div class="text-center mt-4 pt-3 border-top">
+                                        <a href="/buscar" class="btn btn-primary btn-lg" id="btn-reservar-redirect">
+                                            <i class="bi bi-calendar-check me-2"></i> Buscar Disponibilidad y Reservar
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-lg-4 d-none d-lg-block">
+                            <div class="card shadow-sm border-0 sticky-top" style="top: 20px;">
+                                <img src="https://placehold.co/600x400/0d6efd/white?text=Imagen+Sala" 
+                                     class="card-img-top" 
+                                     alt="Imagen de la sala">
+                                <div class="card-body text-center">
+                                    <p class="card-text text-muted">Imagen de referencia de la sala.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+
+        <footer th:replace="~{layout/layout :: footer}"></footer>
+
+    <th:block th:replace="~{layout/layout :: scripts}"></th:block>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const token = localStorage.getItem("jwtToken");
+
+            const loadingSpinner = document.getElementById("loading-spinner");
+            const errorMessage = document.getElementById("error-message");
+            const salaContent = document.getElementById("sala-content");
+
+            const salaNombre = document.getElementById("sala-nombre");
+            const salaEstado = document.getElementById("sala-estado");
+            const salaUbicacion = document.getElementById("sala-ubicacion");
+            const salaCapacidad = document.getElementById("sala-capacidad");
+            const salaEquipos = document.getElementById("sala-equipos");
+            const btnReservar = document.getElementById("btn-reservar-redirect");
+
+            if (!token) {
+                window.location.href = "/login";
+                return;
+            }
+
+            const params = new URLSearchParams(window.location.search);
+            const salaId = params.get('id');
+
+            if (!salaId) {
+                showError("No se ha especificado un ID de sala.");
+                return;
+            }
+
+            async function loadSalaDetalle() {
+                try {
+                    const response = await fetch(`/api/salas/${salaId}`, {
+                        headers: {"Authorization": `Bearer ${token}`}
+                    });
+
+                    if (response.status === 401 || response.status === 403) {
+                        localStorage.removeItem("jwtToken");
+                        window.location.href = "/login?error=auth";
+                        return;
+                    }
+
+                    if (response.status === 404) {
+                        throw new Error(`La sala con ID ${salaId} no existe.`);
+                    }
+
+                    if (!response.ok) {
+                        throw new Error("Error al cargar los datos de la sala.");
+                    }
+
+                    const sala = await response.json();
+
+                    renderDetalles(sala);
+
+                    salaContent.classList.remove("d-none");
+                    loadingSpinner.classList.add("d-none");
+
+                } catch (error) {
+                    console.error("Error:", error);
+                    showError(error.message);
+                }
+            }
+
+            function renderDetalles(sala) {
+                salaNombre.textContent = sala.nombre;
+                salaUbicacion.textContent = sala.ubicacion || "No especificada";
+                salaCapacidad.textContent = sala.capacidad;
+
+                if (sala.activa) {
+                    salaEstado.textContent = "Activa";
+                    salaEstado.className = "badge bg-success-subtle text-success-emphasis fs-5";
+                    btnReservar.classList.remove("disabled");
+                } else {
+                    salaEstado.textContent = "Inactiva";
+                    salaEstado.className = "badge bg-danger-subtle text-danger-emphasis fs-5";
+                    btnReservar.classList.add("disabled"); // Deshabilitar botón si está inactiva
+                }
+
+                salaEquipos.innerHTML = ""; // Limpiar
+                if (!sala.equipos || sala.equipos.length === 0) {
+                    salaEquipos.innerHTML = '<p class="text-muted">No hay equipamiento asignado a esta sala.</p>';
+                    return;
+                }
+
+                sala.equipos.forEach(equipo => {
+                    const equipoCol = document.createElement("div");
+                    equipoCol.className = "col-md-6";
+                    equipoCol.innerHTML = `
+                        <div class="card bg-light border-0 h-100">
+                            <div class="card-body">
+                                <h6 class="card-title">${equipo.nombre}</h6>
+                                <p class="card-text small text-muted mb-0">${equipo.tipo} - (${equipo.estado})</p>
+                            </div>
+                        </div>
+                    `;
+                    salaEquipos.appendChild(equipoCol);
+                });
+            }
+
+            function showError(message) {
+                loadingSpinner.classList.add("d-none");
+                errorMessage.textContent = message;
+                errorMessage.classList.remove("d-none");
+            }
+
+            loadSalaDetalle();
+        });
+    </script>
+
+</body>
+</html>

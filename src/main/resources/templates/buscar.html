@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+
+    <head th:replace="~{layout/layout :: head('Buscar Disponibilidad')}">
+    </head>
+
+    <body class="d-flex flex-column min-vh-100">
+
+        <header th:replace="~{layout/layout :: header}"></header>
+
+        <main class="container flex-grow-1 my-4">
+
+            <div class="p-4 mb-4 bg-light rounded-3 shadow-sm">
+                <div class="container-fluid py-3">
+                    <h1 class="display-5 fw-bold">Buscar Salas Disponibles</h1>
+                    <p class="col-md-8 fs-4">
+                        Encuentra y reserva la sala perfecta para tu reunión.
+                    </p>
+                </div>
+            </div>
+
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0"><i class="bi bi-funnel-fill me-2"></i>Define tus Criterios</h5>
+                </div>
+                <div class="card-body">
+                    <form id="searchForm">
+                        <div class="row g-3">
+                            <div class="col-md-6 col-lg-4">
+                                <label for="inicio" class="form-label">Inicio de la reunión</label>
+                                <input type="datetime-local" class="form-control" id="inicio" required>
+                            </div>
+                            <div class="col-md-6 col-lg-4">
+                                <label for="fin" class="form-label">Fin de la reunión</label>
+                                <input type="datetime-local" class="form-control" id="fin" required>
+                            </div>
+                            <div class="col-md-6 col-lg-2">
+                                <label for="capacidad" class="form-label">Capacidad Mín.</label>
+                                <input type="number" class="form-control" id="capacidad" min="1" placeholder="Ej: 5">
+                            </div>
+                            <div class="col-md-6 col-lg-2 d-flex align-items-end">
+                                <div class="form-check form-switch fs-5">
+                                    <input class="form-check-input" type="checkbox" role="switch" id="activa" checked>
+                                    <label class="form-check-label" for="activa">Solo Activas</label>
+                                </div>
+                            </div>
+
+                            <div class="col-12">
+                                <label class="form-label mb-0">Equipamiento Requerido:</label>
+                                <div id="equipos-checkbox-container" class="mt-2 d-flex flex-wrap gap-3">
+                                    <div class="spinner-border spinner-border-sm text-muted" role="status">
+                                        <span class="visually-hidden">Cargando equipos...</span>
+                                    </div>
+                                    <span class="text-muted small">Cargando equipos...</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <hr>
+
+                        <div class="d-flex justify-content-end">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="bi bi-search me-1"></i> Buscar
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div id="error-message" class="alert alert-danger d-none" role="alert"></div>
+            <div id="success-message" classal="alert alert-success d-none" role="alert"></div>
+
+            <h2 class="mb-3">Resultados</h2>
+
+            <div id="loading-spinner" class="text-center my-5 d-none">
+                <div classs="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Buscando...</span>
+                </div>
+                <p class="mt-2">Buscando salas disponibles...</p>
+            </div>
+
+            <div id="results-container" class="row g-4">
+            </div>
+
+            <div id="no-results" class="text-center my-5">
+                <i class="bi bi-calendar-x fs-1 text-muted"></i>
+                <h4 class="mt-3">Aún no has realizado una búsqueda</h4>
+                <p class="text-muted">Por favor, define un rango de fechas para buscar.</p>
+            </div>
+
+        </main>
+
+        <div class="modal fade" id="confirmReservaModal" tabindex="-1" aria-labelledby="modalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="modalLabel">Confirmar Reserva</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p>¿Estás seguro de que deseas reservar la sala <strong id="modal-sala-nombre"></strong>?</p>
+                        <ul class="list-unstyled">
+                            <li><strong>Desde:</strong> <span id="modal-inicio-fecha"></span></li>
+                            <li><strong>Hasta:</strong> <span id="modal-fin-fecha"></span></li>
+                        </ul>
+
+                        <div id="modal-error-message" class="alert alert-danger d-none mt-3" role="alert"></div>
+                    </div>
+                    <div classm="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="button" class="btn btn-primary" id="modal-confirm-button">
+                            Sí, reservar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <footer th:replace="~{layout/layout :: footer}"></footer>
+
+    <th:block th:replace="~{layout/layout :: scripts}"></th:block>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+        const token = localStorage.getItem("jwtToken");
+        const searchForm = document.getElementById("searchForm");
+        const resultsContainer = document.getElementById("results-container");
+        const errorMessage = document.getElementById("error-message");
+        const successMessage = document.getElementById("success-message");
+        const loadingSpinner = document.getElementById("loading-spinner");
+        const noResults = document.getElementById("no-results");
+        const equiposContainer = document.getElementById("equipos-checkbox-container");
+        const confirmModal = new bootstrap.Modal(document.getElementById('confirmReservaModal'));
+        const modalSalaNombre = document.getElementById("modal-sala-nombre");
+        const modalInicioFecha = document.getElementById("modal-inicio-fecha");
+        const modalFinFecha = document.getElementById("modal-fin-fecha");
+        const modalConfirmButton = document.getElementById("modal-confirm-button");
+        const modalErrorMessage = document.getElementById("modal-error-message");
+        let reservaParaConfirmar = {};
+        if (!token) {
+        window.location.href = "/login?redirect=buscar";
+        return;
+        }
+
+        async function loadEquipos() {
+        try {
+        const response = await fetch("/api/equipos", {
+        headers: { "Authorization": `Bearer ${token}` }
+        });
+        if (!response.ok) throw new Error("Error al cargar equipos");
+        const equipos = await response.json();
+        equiposContainer.innerHTML = "";
+        if (equipos.length === 0) {
+        equiposContainer.innerHTML = '<span class="text-muted small">No hay equipos registrados.</span>';
+        return;
+        }
+
+        equipos.forEach(equipo => {
+        const div = document.createElement("div");
+        div.className = "form-check";
+                div.innerHTML = `
+        <input class="form-check-input" type="checkbox" value="${equipo.id}" id="equipo-${equipo.id}">
+        <label class="form-check-label" for="equipo-${equipo.id}">
+        ${equipo.nombre}
+        </label>
+        `; equiposContainer.appendChild(div);
+        });
+                } catch (error) {
+        console.error("Error cargando equipos:", error);
+        equiposContainer.innerHTML = '<span class="text-danger small">No se pudieron cargar los equipos.</span>';
+        }
+        }
+
+                async function handleSearch(event) {
+        if (event) event.preventDefault();
+        loadingSpinner.classList.remove("d-none");
+        resultsContainer.innerHTML = "";
+        noResults.classList.add("d-none");
+        errorMessage.classList.add("d-none");
+        successMessage.classList.add("d-none");
+        // 1. Obtener valores del formulario
+        const inicio = document.getElementById("inicio").value;
+        const fin = document.getElementById("fin").value;
+        const capacidad = document.getElementById("capacidad").value;
+        const activa = document.getElementById("activa").checked;
+        const equipoCheckboxes = equiposContainer.querySelectorAll('input[type="checkbox"]:checked');
+        const equipoIds = Array.from(equipoCheckboxes).map(cb => cb.value);
+        if (!inicio || !fin) {
+        showError("Las fechas de inicio y fin son obligatorias.");
+        loadingSpinner.classList.add("d-none");
+        return;
+        }
+        if (new Date(fin) <= new Date(inicio)) {         showError("La fecha de fin debe ser posterior a la fecha de inicio.");
+        loadingSpinner.classList.add("d-none");
+        return;
+        }
+
+        const params = new URLSearchParams({
+        inicio: inicio,
+                fin: fin,
+                activa: activa
+        });
+        if (capacidad) params.append('capacidad', capacidad);
+        equipoIds.forEach(id => params.append('equipoIds', id));
+        const url = `/api/salas/disponibles?${params.toString()}`;
+        try {
+        const response = await fetch(url, {
+        headers: { "Authorization": `Bearer ${token}` }
+        });
+        if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Error en la búsqueda");
+        }
+
+        const salas = await response.json();
+        if (salas.length === 0) {
+        noResults.classList.remove("d-none");
+        noResults.innerHTML = `
+                            <i class="bi bi-emoji-frown fs-1 text-muted"></i>
+                            <h4 class="mt-3">No se encontraron salas</h4>
+                            <p class="text-muted">No hay salas disponibles con esos criterios. Intenta cambiar las fechas o filtros.</p>
+                        `;
+        } else {
+        renderSalas(salas, inicio, fin);
+        }
+
+        } catch (error) {
+        console.error("Error en la búsqueda:", error);
+        showError(error.message);
+        } finally {
+        loadingSpinner.classList.add("d-none");
+        }
+        }
+
+        function renderSalas(salas, inicio, fin) {
+        resultsContainer.innerHTML = "";
+        salas.forEach(sala => {
+        const salaCard = document.createElement("div");
+        salaCard.className = "col-md-6";
+        const tituloSala = `
+                        <a href="/sala-detalle?id=${sala.id}" class="text-decoration-none text-dark" target="_blank">
+                            ${sala.nombre} <i class="bi bi-box-arrow-up-right small"></i>
+                        </a>
+                    `;
+        salaCard.innerHTML = `
+                        <div class="card h-100 shadow-sm border-0">
+                            <div class="card-body">
+                                <h5 class="card-title">${tituloSala}</h5> <!-- Título reemplazado -->
+                                <h6 class="card-subtitle mb-2 text-muted">
+                                    <i class="bi bi-geo-alt-fill me-1"></i> ${sala.ubicacion || 'Sin ubicación'}
+                                </h6>
+                                <p class="card-text mb-1">
+                                    <i class="bi bi-people-fill me-1"></i> Capacidad: <strong>${sala.capacidad} personas</strong>
+                                </p>
+                                <p class="mb-1"><strong>Equipamiento:</strong></p>
+                                ${renderEquipos(sala.equipos)}
+                            </div>
+                            <div class="card-footer bg-white border-0 text-end">
+                                <button class="btn btn-primary btn-sm btn-reservar" 
+                                        data-sala-id="${sala.id}" 
+                                        data-sala-nombre="${sala.nombre}"
+                                        data-inicio="${inicio}"
+                                        data-fin="${fin}">
+                                    Reservar
+                                </button>
+                            </div>
+                        </div>
+                    `;
+
+                    resultsContainer.appendChild(salaCard);
+                });
+
+                document.querySelectorAll('.btn-reservar').forEach(button => {
+                    button.addEventListener('click', () => {
+                        reservaParaConfirmar = {
+                            salaId: button.dataset.salaId,
+                            salaNombre: button.dataset.salaNombre,
+                            inicio: button.dataset.inicio,
+                            fin: button.dataset.fin
+                        };
+                        
+                        modalSalaNombre.textContent = reservaParaConfirmar.salaNombre;
+                        modalInicioFecha.textContent = new Date(reservaParaConfirmar.inicio).toLocaleString();
+                        modalFinFecha.textContent = new Date(reservaParaConfirmar.fin).toLocaleString();
+                        
+                        modalErrorMessage.classList.add("d-none"); 
+                        confirmModal.show();
+                    });
+                });
+            }
+            
+            async function handleReservation() {
+                const { salaId, inicio, fin } = reservaParaConfirmar;
+                modalConfirmButton.disabled = true; 
+                modalErrorMessage.classList.add("d-none");
+
+                try {
+                    const response = await fetch("/api/reservas", {
+                        method: "POST",
+                        headers: {
+                            "Authorization": `Bearer ${token}`,
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify({ salaId, inicio, fin })
+                    });
+                    
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        throw new Error(errorData.message || "No se pudo crear la reserva.");
+                    }
+                    
+                    confirmModal.hide();
+                    showSuccess(`¡Sala "${reservaParaConfirmar.salaNombre}" reservada exitosamente!`);
+                    
+                    handleSearch(); 
+                    
+                } catch (error) {
+                    console.error("Error al reservar:", error);
+                    modalErrorMessage.textContent = error.message; 
+                    modalErrorMessage.classList.remove("d-none");
+                } finally {
+                    modalConfirmButton.disabled = false; 
+                }
+            }
+
+
+            function renderEquipos(equipos) {
+                if (!equipos || equipos.length === 0) {
+                    return '<span class="text-muted small">No hay equipos asignados.</span>';
+                }
+                let equipoHtml = '<ul class="list-group list-group-flush list-group-numbered small">';
+                equipos.forEach(equipo => {
+                    equipoHtml += `<li class="list-group-item px-0 py-1">${equipo.nombre} (${equipo.tipo})</li>`;
+                });
+                equipoHtml += '</ul>';
+                return equipoHtml;
+            }
+            
+            function showError(message) {
+                errorMessage.textContent = message;
+                errorMessage.classList.remove("d-none");
+            }
+            
+            function showSuccess(message) {
+                successMessage.textContent = message;
+                successMessage.classList.remove("d-none");
+            }
+
+
+            searchForm.addEventListener("submit", handleSearch);
+            modalConfirmButton.addEventListener("click", handleReservation);
+
+            loadEquipos();
+        });
+    </script>
+
+</body>
+</html>
+
