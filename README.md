@@ -1,245 +1,126 @@
-Sistema de Reserva de Salas - API
+---
 
-API RESTful para la gestión y reserva de salas de reuniones, desarrollada con Spring Boot, Spring Security, JWT y MySQL.
+# Documentación del Frontend (Thymeleaf + JavaScript)
 
-Características Principales
+Este documento describe la arquitectura del frontend, el manejo de la seguridad y el flujo de integración con el backend.
 
-Autenticación y Autorización: Sistema seguro basado en roles (ADMIN, USER) utilizando JWT.
+---
 
-Gestión de Salas (CRUD): Creación, lectura, actualización y eliminación de salas (protegido para ADMIN).
+## 1. Estructura de Vistas
 
-Gestión de Equipos (CRUD): Administración del equipamiento disponible en las salas (protegido para ADMIN).
+El frontend utiliza **Thymeleaf** para el renderizado del lado del servidor, pero funciona de manera similar a una aplicación de una sola página (SPA) en su interacción con la API.
 
-Sistema de Reservas: Los usuarios autenticados pueden crear, cancelar y ver sus reservas.
+* **`WebController.java`**
+  Controlador de Spring responsable de servir todas las plantillas HTML base.
+  No pasa modelos de datos (excepto el título de la página).
 
-Búsqueda Avanzada: Filtra salas disponibles por fecha, capacidad y equipamiento.
+* **`templates/layout/layout.html`**
+  Plantilla principal que define:
 
-Concurrencia: Mecanismo de bloqueo para evitar reservas simultáneas en la misma sala.
+  * `<head>` con dependencias (Bootstrap, CSS, JS, etc.)
+  * `<header>` con la barra de navegación.
+  * `<footer>` con la información común.
+    Todas las demás vistas se insertan dentro del elemento `<main>` de este layout.
 
-Base de Datos: Persistencia de datos con MySQL y migraciones gestionadas por Flyway.
+* **Vistas de Página** (`home.html`, `salas.html`, `buscar.html`, etc.)
+  Son “caparazones” HTML que extienden `layout.html`.
+  Contienen la estructura inicial y un bloque `<script>` que proporciona toda la interactividad mediante JavaScript.
 
-Contenerización: Totalmente dockerizado para un despliegue y desarrollo sencillos con Docker Compose.
+---
 
-Guía de Inicio Rápido (5 minutos)
+## 2. Flujo de Integración (Datos)
 
-Sigue estos pasos para tener el proyecto corriendo localmente usando Docker.
+El flujo de datos entre el cliente y el servidor sigue este proceso:
 
-Pre-requisitos
+1. **Solicitud HTTP:**
+   El usuario navega a `/salas`.
 
-Docker
+2. **Spring (Servidor):**
+   `WebController` intercepta la solicitud y devuelve el archivo `salas.html` renderizado por Thymeleaf.
 
-Docker Compose
+3. **Navegador (Cliente):**
+   El navegador carga `salas.html`.
 
-Java 17+
+4. **JavaScript (Cliente):**
+   Se dispara el evento `DOMContentLoaded`.
 
-Maven 3.8+
+5. **Llamada a la API:**
+   El script ejecuta:
 
-Pasos
+   ```javascript
+   fetch('/api/salas')
+   ```
 
-1. Clonar el Repositorio
+   para obtener los datos reales.
 
-git clone https://github.com/luis-vallejos/Consultas.git
-cd Consultas
+6. **Spring (Servidor):**
+   `SalaController` intercepta `/api/salas`, consulta la base de datos y devuelve una respuesta JSON.
 
+7. **JavaScript (Cliente):**
+   El script recibe el JSON y lo usa para renderizar dinámicamente el contenido en la página, por ejemplo:
 
-2. Empaquetar la Aplicación
+   ```javascript
+   renderSalas(data.content);
+   ```
 
-Este comando compila el código, ejecuta las pruebas y crea el archivo .jar que se usará en el contenedor Docker.
+---
 
-./mvnw clean package -DskipTests
+## 3. Manejo de Seguridad (JWT)
 
+La seguridad del frontend se gestiona completamente del lado del cliente usando **JavaScript** y **localStorage**.
 
-3. Levantar los Servicios con Docker Compose
+### 3.1. Inicio de Sesión
 
-Este único comando construirá la imagen de la aplicación y levantará dos contenedores: uno para la API (app) y otro para la base de datos MySQL (db).
+* **Login:**
+  En `login.html`, el `fetch` a `/api/auth/login` recibe un token JWT.
 
-docker-compose up --build
+* **Almacenamiento:**
+  El token se guarda en:
 
+  ```javascript
+  localStorage.setItem("jwtToken", data.token);
+  ```
 
-¡Y listo! La base de datos se iniciará, Flyway aplicará las migraciones y la aplicación estará disponible.
+* **Inyección de Token:**
+  En las vistas que requieren autenticación (`salas.html`, `buscar.html`, `admin.html`, etc.), el token se recupera desde el almacenamiento local.
 
-API URL: http://localhost:8080
+* **Llamadas Seguras:**
+  Todas las peticiones protegidas deben incluir el token en la cabecera:
 
-Endpoint de Salud: http://localhost:8080/actuator/health (debería responder {"status":"UP"}).
+  ```javascript
+  fetch("/api/salas", {
+      headers: {
+          "Authorization": `Bearer ${token}`
+      }
+  });
+  ```
 
-Detener la Aplicación
+---
 
-Para detener y eliminar los contenedores, presiona Ctrl + C en la terminal donde ejecutaste docker-compose up y luego ejecuta:
+## 3.2. Vistas por Roles
 
-docker-compose down
+### Decodificación de JWT
 
+`layout.html` contiene una función global que decodifica el payload del JWT:
 
-Documentación de la API
-
-La API sigue un diseño RESTful estándar. Todas las respuestas son en formato JSON.
-
-Autenticación
-
-Todas las rutas (excepto /api/auth/**) requieren un Token JWT en la cabecera de autorización.
-
-Authorization: Bearer <TU_TOKEN_JWT>
-
-POST /api/auth/register
-
-Registra un nuevo usuario en el sistema.
-
-Body (Request):
-
-{
-  "nombre": "Carlos Ruiz",
-  "correo": "carlos.ruiz@example.com",
-  "password": "password123"
+```javascript
+function parseJwt(token) {
+    const base64Url = token.split('.')[1];
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    return JSON.parse(window.atob(base64));
 }
+```
 
+### Comprobación de Rol
 
-Response (201 Created):
+Una segunda función, `checkAdminStatus(token)`, usa `parseJwt` para leer el array `roles` dentro del payload y verificar si incluye `ROLE_ADMIN`.
 
-{
-  "id": 4,
-  "nombre": "Carlos Ruiz",
-  "correo": "carlos.ruiz@example.com",
-  "contrasenia": "$2a$10$...",
-  "roles": [{"id": 2, "name": "ROLE_USER"}]
-}
+### Renderizado Condicional
 
+El script principal de `layout.html` usa `checkAdminStatus(token)` para mostrar u ocultar el enlace con `id="nav-admin-li"`.
 
-POST /api/auth/login
+### Protección de Ruta (Cliente)
 
-Autentica a un usuario y devuelve un token JWT.
+En vistas como `admin.html`, se repite esta comprobación al cargar.
+Si el usuario **no es administrador**, se redirige automáticamente a la página de inicio (`/`).
 
-Body (Request):
-
-{
-  "correo": "admin@consultas.com",
-  "password": "admin"
-}
-
-
-Response (200 OK):
-
-{
-  "token": "eyJhbGciOiJIUzI1NiJ9..."
-}
-
-
-Salas
-
-GET /api/salas
-
-Busca y lista todas las salas con paginación.
-
-Query Params (Opcionales):
-
-capacidadMinima (int): Filtra por capacidad mínima.
-
-tipoEquipo (string): Filtra por tipo de equipo disponible.
-
-activa (boolean): Filtra por salas activas o inactivas.
-
-page, size, sort: Parámetros de paginación de Spring Data.
-
-Response (200 OK):
-
-{
-  "content": [
-    {
-      "id": 1,
-      "nombre": "Sala Creativa",
-      "capacidad": 12,
-      "ubicacion": "Piso 1, Ala Norte",
-      "activa": true,
-      "equipos": []
-    }
-  ],
-  "totalPages": 1,
-  "totalElements": 1,
-  "number": 0
-}
-
-
-GET /api/salas/disponibles
-
-Busca salas disponibles en un rango de fechas y con filtros adicionales.
-
-Query Params (Obligatorios):
-
-inicio (string): Fecha y hora de inicio en formato ISO (YYYY-MM-DDTHH:mm:ss).
-
-fin (string): Fecha y hora de fin en formato ISO.
-
-Query Params (Opcionales):
-
-capacidad (int): Capacidad mínima requerida.
-
-equipoIds (long[]): Lista de IDs de equipos requeridos.
-
-Ejemplo de Petición:
-GET /api/salas/disponibles?inicio=2025-12-01T10:00:00&fin=2025-12-01T12:00:00&capacidad=5
-
-Response (200 OK): Lista de SalaDto
-
-POST /api/salas
-
-Crea una nueva sala. (Requiere rol ADMIN)
-
-Body (Request):
-
-{
-  "nombre": "Sala de Innovación",
-  "capacidad": 20,
-  "ubicacion": "Piso 3",
-  "activa": true,
-  "equipoIds": [1, 3]
-}
-
-
-Response (200 OK): SalaDto de la sala creada.
-
-Reservas
-
-POST /api/reservas
-
-Crea una nueva reserva para el usuario autenticado.
-
-Body (Request):
-
-{
-  "salaId": 1,
-  "inicio": "2025-12-25T14:00:00",
-  "fin": "2025-12-25T15:30:00"
-}
-
-
-Response (201 Created): ReservaDto de la reserva creada.
-
-GET /api/reservas
-
-Obtiene la lista de reservas del usuario autenticado. Si el usuario es ADMIN, obtiene todas las reservas.
-
-Response (200 OK): Lista de ReservaDto
-
-PUT /api/reservas/{id}/cancelar
-
-Cancela una reserva existente.
-
-Response (200 OK): ReservaDto con el estado "CANCELADA".
-
-Historial de Cambios
-
-Versión 1.0.0 (2025-10-21)
-
-🎉 Lanzamiento inicial del proyecto.
-
-Funcionalidades:
-
-Módulos completos de Autenticación, Salas, Equipos y Reservas.
-
-Soporte para roles de ADMIN y USER.
-
-Búsqueda de salas disponibles con filtros.
-
-Configuración de Docker para despliegue fácil.
-
-Migraciones de base de datos con Flyway.
-
-Pruebas unitarias y de integración (smoke test).
