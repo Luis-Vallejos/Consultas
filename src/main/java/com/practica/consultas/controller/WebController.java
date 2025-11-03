@@ -40,4 +40,9 @@ public class WebController {
     public String showMisReservasPage() {
         return "mis-reservas";
     }
+
+    @GetMapping("/admin")
+    public String showAdminPage() {
+        return "admin";
+    }
 }
