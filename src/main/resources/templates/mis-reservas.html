@@ -17,9 +17,6 @@
                 </a>
             </div>
 
-            <div id="error-message" class="alert alert-danger d-none" role="alert"></div>
-            <div id="success-message" class="alert alert-success d-none" role="alert"></div>
-
             <div id="loading-spinner" class="text-center my-5">
                 <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status">
                     <span class="visually-hidden">Cargando...</span>
@@ -47,7 +44,6 @@
                     <div class="modal-body">
                         <p>¿Estás seguro de que deseas cancelar tu reserva para la sala <strong id="modal-sala-nombre"></strong>?</p>
                         <p class="text-muted small">Esta acción no se puede deshacer.</p>
-                        <div id="modal-error-message" class="alert alert-danger d-none mt-3" role="alert"></div>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">No, mantener</button>
@@ -74,21 +70,17 @@
             }
 
             const loadingSpinner = document.getElementById("loading-spinner");
-            const errorMessage = document.getElementById("error-message");
-            const successMessage = document.getElementById("success-message");
             const reservasContainer = document.getElementById("reservas-container");
             const noResults = document.getElementById("no-results");
 
             const confirmModal = new bootstrap.Modal(document.getElementById('confirmCancelModal'));
             const modalSalaNombre = document.getElementById("modal-sala-nombre");
             const modalConfirmCancelButton = document.getElementById("modal-confirm-cancel-button");
-            const modalErrorMessage = document.getElementById("modal-error-message");
 
             let reservaParaCancelarId = null;
 
             async function loadReservas() {
                 showLoading(true);
-                hideAlerts();
                 try {
                     const response = await fetch("/api/reservas", {
                         headers: {"Authorization": `Bearer ${token}`}
@@ -103,7 +95,7 @@
 
                 } catch (error) {
                     console.error("Error cargando reservas:", error);
-                    showAlert(errorMessage, "Error al cargar tus reservas. Intenta recargar la página.");
+                    showGlobalToast("Error al cargar tus reservas. Intenta recargar la página.", "danger");
                 } finally {
                     showLoading(false);
                 }
@@ -191,7 +183,6 @@
                     button.addEventListener('click', () => {
                         reservaParaCancelarId = button.dataset.reservaId;
                         modalSalaNombre.textContent = button.dataset.salaNombre;
-                        modalErrorMessage.classList.add("d-none");
                         confirmModal.show();
                     });
                 });
@@ -202,7 +193,6 @@
                     return;
 
                 modalConfirmCancelButton.disabled = true;
-                modalErrorMessage.classList.add("d-none");
 
                 try {
                     const response = await fetch(`/api/reservas/${reservaParaCancelarId}/cancelar`, {
@@ -216,13 +206,13 @@
                     }
 
                     confirmModal.hide();
-                    showAlert(successMessage, `Reserva (ID: ${reservaParaCancelarId}) cancelada exitosamente.`);
-                    loadReservas();
+                    showGlobalToast(`Reserva (ID: ${reservaParaCancelarId}) cancelada exitosamente.`, 'success');
+                    loadReservas(); // Recargar la lista
 
                 } catch (error) {
                     console.error("Error al cancelar:", error);
-                    modalErrorMessage.textContent = error.message;
-                    modalErrorMessage.classList.remove("d-none");
+                    confirmModal.hide(); // Ocultar el modal para mostrar el toast
+                    showGlobalToast(error.message, 'danger');
                 } finally {
                     modalConfirmCancelButton.disabled = false;
                     reservaParaCancelarId = null;
@@ -256,16 +246,6 @@
                     loadingSpinner.classList.add("d-none");
                     reservasContainer.classList.remove("d-none");
                 }
-            }
-
-            function hideAlerts() {
-                errorMessage.classList.add("d-none");
-                successMessage.classList.add("d-none");
-            }
-
-            function showAlert(alertElement, message) {
-                alertElement.textContent = message;
-                alertElement.classList.remove("d-none");
             }
 
             modalConfirmCancelButton.addEventListener("click", handleCancelReservation);
