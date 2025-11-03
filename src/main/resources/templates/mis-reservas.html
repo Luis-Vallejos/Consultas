@@ -17,11 +17,9 @@
                 </a>
             </div>
 
-            <!-- Alertas -->
             <div id="error-message" class="alert alert-danger d-none" role="alert"></div>
             <div id="success-message" class="alert alert-success d-none" role="alert"></div>
 
-            <!-- Spinner de Carga -->
             <div id="loading-spinner" class="text-center my-5">
                 <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status">
                     <span class="visually-hidden">Cargando...</span>
@@ -29,12 +27,9 @@
                 <p class="mt-2">Cargando tus reservas...</p>
             </div>
 
-            <!-- Contenedor de Reservas -->
             <div id="reservas-container" class="row g-4">
-                <!-- Las tarjetas de reserva se insertarán aquí -->
             </div>
 
-            <!-- Mensaje de No Hay Resultados -->
             <div id="no-results" class="text-center my-5 d-none">
                 <i class="bi bi-calendar-x fs-1 text-muted"></i>
                 <h4 class="mt-3">No tienes reservas</h4>
@@ -42,7 +37,6 @@
             </div>
         </main>
 
-        <!-- Modal de Confirmación de Cancelación -->
         <div class="modal fade" id="confirmCancelModal" tabindex="-1" aria-labelledby="modalLabel" aria-hidden="true">
             <div class="modal-dialog">
                 <div class="modal-content">
@@ -118,9 +112,7 @@
             function renderReservas(reservas) {
                 reservasContainer.innerHTML = "";
 
-                // Ordenar: primero CONFIRMADAS y futuras, luego el resto.
                 reservas.sort((a, b) => {
-                    // Prioridad 1: Confirmadas y futuras
                     let aEsFuturaConfirmada = a.estado === 'CONFIRMADA' && new Date(a.inicio) > new Date();
                     let bEsFuturaConfirmada = b.estado === 'CONFIRMADA' && new Date(b.inicio) > new Date();
 
@@ -129,7 +121,6 @@
                     if (!aEsFuturaConfirmada && bEsFuturaConfirmada)
                         return 1;
 
-                    // Prioridad 2: Por fecha de inicio (más próximas primero)
                     return new Date(a.inicio) - new Date(b.inicio);
                 });
 
@@ -153,10 +144,10 @@
                     let statusBadge = `<span class="badge bg-success-subtle text-success-emphasis">Confirmada</span>`;
 
                     if (esCancelada) {
-                        cardClass = 'border-0 bg-light'; // Estilo más tenue
+                        cardClass = 'border-0 bg-light';
                         statusBadge = `<span class="badge bg-danger-subtle text-danger-emphasis">Cancelada</span>`;
                     } else if (esPasada) {
-                        cardClass = 'border-0 bg-light'; // Estilo más tenue
+                        cardClass = 'border-0 bg-light';
                         statusBadge = `<span class="badge bg-secondary-subtle text-secondary-emphasis">Finalizada</span>`;
                     }
 
@@ -196,7 +187,6 @@
                     reservasContainer.appendChild(reservaCard);
                 });
 
-                // Añadir listeners a los botones de cancelar
                 document.querySelectorAll('.btn-cancelar').forEach(button => {
                     button.addEventListener('click', () => {
                         reservaParaCancelarId = button.dataset.reservaId;
@@ -227,7 +217,7 @@
 
                     confirmModal.hide();
                     showAlert(successMessage, `Reserva (ID: ${reservaParaCancelarId}) cancelada exitosamente.`);
-                    loadReservas(); // Recargar la lista
+                    loadReservas();
 
                 } catch (error) {
                     console.error("Error al cancelar:", error);
@@ -238,8 +228,6 @@
                     reservaParaCancelarId = null;
                 }
             }
-
-            // --- Funciones Utilitarias ---
 
             function formatearFecha(fechaISO) {
                 const fecha = new Date(fechaISO);
@@ -280,10 +268,8 @@
                 alertElement.classList.remove("d-none");
             }
 
-            // --- Listeners ---
             modalConfirmCancelButton.addEventListener("click", handleCancelReservation);
 
-            // --- Carga Inicial ---
             loadReservas();
         });
     </script>
