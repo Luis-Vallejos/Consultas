@@ -67,13 +67,10 @@
                 </div>
             </div>
 
-            <div id="error-message" class="alert alert-danger d-none" role="alert"></div>
-            <div id="success-message" classal="alert alert-success d-none" role="alert"></div>
-
             <h2 class="mb-3">Resultados</h2>
 
             <div id="loading-spinner" class="text-center my-5 d-none">
-                <div classs="spinner-border text-primary" role="status">
+                <div class="spinner-border text-primary" role="status">
                     <span class="visually-hidden">Buscando...</span>
                 </div>
                 <p class="mt-2">Buscando salas disponibles...</p>
@@ -103,10 +100,8 @@
                             <li><strong>Desde:</strong> <span id="modal-inicio-fecha"></span></li>
                             <li><strong>Hasta:</strong> <span id="modal-fin-fecha"></span></li>
                         </ul>
-
-                        <div id="modal-error-message" class="alert alert-danger d-none mt-3" role="alert"></div>
                     </div>
-                    <div classm="modal-footer">
+                    <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
                         <button type="button" class="btn btn-primary" id="modal-confirm-button">
                             Sí, reservar
@@ -126,8 +121,6 @@
         const token = localStorage.getItem("jwtToken");
         const searchForm = document.getElementById("searchForm");
         const resultsContainer = document.getElementById("results-container");
-        const errorMessage = document.getElementById("error-message");
-        const successMessage = document.getElementById("success-message");
         const loadingSpinner = document.getElementById("loading-spinner");
         const noResults = document.getElementById("no-results");
         const equiposContainer = document.getElementById("equipos-checkbox-container");
@@ -136,7 +129,6 @@
         const modalInicioFecha = document.getElementById("modal-inicio-fecha");
         const modalFinFecha = document.getElementById("modal-fin-fecha");
         const modalConfirmButton = document.getElementById("modal-confirm-button");
-        const modalErrorMessage = document.getElementById("modal-error-message");
         let reservaParaConfirmar = {};
         if (!token) {
         window.location.href = "/login?redirect=buscar";
@@ -158,18 +150,17 @@
 
         equipos.forEach(equipo => {
         const div = document.createElement("div");
-        div.className = "form-check";
-                div.innerHTML = `
+                div.className = "form-check";
+        div.innerHTML = `
         <input class="form-check-input" type="checkbox" value="${equipo.id}" id="equipo-${equipo.id}">
         <label class="form-check-label" for="equipo-${equipo.id}">
         ${equipo.nombre}
         </label>
         `; equiposContainer.appendChild(div);
-        });
-                } catch (error) {
+                });
+        } catch (error) {
         console.error("Error cargando equipos:", error);
-        equiposContainer.innerHTML = '<span class="text-danger small">No se pudieron cargar los equipos.</span>';
-        }
+        equiposContainer.innerHTML = '<span class="text-danger small">No se pudieron cargar los equipos.</span>'; }
         }
 
                 async function handleSearch(event) {
@@ -177,33 +168,26 @@
         loadingSpinner.classList.remove("d-none");
         resultsContainer.innerHTML = "";
         noResults.classList.add("d-none");
-        errorMessage.classList.add("d-none");
-        successMessage.classList.add("d-none");
-        // 1. Obtener valores del formulario
-        const inicio = document.getElementById("inicio").value;
-        const fin = document.getElementById("fin").value;
+        const inicio = document.getElementById("inicio").value;         const fin = document.getElementById("fin").value;
         const capacidad = document.getElementById("capacidad").value;
         const activa = document.getElementById("activa").checked;
         const equipoCheckboxes = equiposContainer.querySelectorAll('input[type="checkbox"]:checked');
-        const equipoIds = Array.from(equipoCheckboxes).map(cb => cb.value);
-        if (!inicio || !fin) {
+        const equipoIds = Array.from(equipoCheckboxes).map(cb => cb.value);         if (!inicio || !fin) {
         showError("Las fechas de inicio y fin son obligatorias.");
         loadingSpinner.classList.add("d-none");
-        return;
-        }
+        return; }
         if (new Date(fin) <= new Date(inicio)) {         showError("La fecha de fin debe ser posterior a la fecha de inicio.");
         loadingSpinner.classList.add("d-none");
         return;
         }
 
         const params = new URLSearchParams({
-        inicio: inicio,
+                inicio: inicio,
                 fin: fin,
-                activa: activa
+        activa: activa
         });
         if (capacidad) params.append('capacidad', capacidad);
-        equipoIds.forEach(id => params.append('equipoIds', id));
-        const url = `/api/salas/disponibles?${params.toString()}`;
+        equipoIds.forEach(id => params.append('equipoIds', id));         const url = `/api/salas/disponibles?${params.toString()}`;
         try {
         const response = await fetch(url, {
         headers: { "Authorization": `Bearer ${token}` }
@@ -212,15 +196,13 @@
         const errorData = await response.json();
         throw new Error(errorData.message || "Error en la búsqueda");
         }
-
         const salas = await response.json();
-        if (salas.length === 0) {
-        noResults.classList.remove("d-none");
+        if (salas.length === 0) {         noResults.classList.remove("d-none");
         noResults.innerHTML = `
                             <i class="bi bi-emoji-frown fs-1 text-muted"></i>
                             <h4 class="mt-3">No se encontraron salas</h4>
-                            <p class="text-muted">No hay salas disponibles con esos criterios. Intenta cambiar las fechas o filtros.</p>
-                        `;
+        <p class="text-muted">No hay salas disponibles con esos criterios. Intenta cambiar las fechas o filtros.</p>
+        `;
         } else {
         renderSalas(salas, inicio, fin);
         }
@@ -231,10 +213,10 @@
         } finally {
         loadingSpinner.classList.add("d-none");
         }
-        }
-
-        function renderSalas(salas, inicio, fin) {
-        resultsContainer.innerHTML = "";
+                            }
+                            
+                            function renderSalas(salas, inicio, fin) {
+                resultsContainer.innerHTML = "";
         salas.forEach(sala => {
         const salaCard = document.createElement("div");
         salaCard.className = "col-md-6";
@@ -284,7 +266,6 @@
                         modalInicioFecha.textContent = new Date(reservaParaConfirmar.inicio).toLocaleString();
                         modalFinFecha.textContent = new Date(reservaParaConfirmar.fin).toLocaleString();
                         
-                        modalErrorMessage.classList.add("d-none"); 
                         confirmModal.show();
                     });
                 });
@@ -293,7 +274,6 @@
             async function handleReservation() {
                 const { salaId, inicio, fin } = reservaParaConfirmar;
                 modalConfirmButton.disabled = true; 
-                modalErrorMessage.classList.add("d-none");
 
                 try {
                     const response = await fetch("/api/reservas", {
@@ -317,36 +297,33 @@
                     
                 } catch (error) {
                     console.error("Error al reservar:", error);
-                    modalErrorMessage.textContent = error.message; 
-                    modalErrorMessage.classList.remove("d-none");
+                    confirmModal.hide(); 
+                    showError(error.message); 
                 } finally {
                     modalConfirmButton.disabled = false; 
                 }
             }
 
-
             function renderEquipos(equipos) {
                 if (!equipos || equipos.length === 0) {
                     return '<span class="text-muted small">No hay equipos asignados.</span>';
                 }
-                let equipoHtml = '<ul class="list-group list-group-flush list-group-numbered small">';
+                
+                let equipoHtml = '<div class="d-flex flex-wrap gap-1 mt-1">';
                 equipos.forEach(equipo => {
-                    equipoHtml += `<li class="list-group-item px-0 py-1">${equipo.nombre} (${equipo.tipo})</li>`;
+                    equipoHtml += `<span class="badge bg-secondary-subtle text-secondary-emphasis rounded-pill">${equipo.nombre} (${equipo.tipo})</span>`;
                 });
-                equipoHtml += '</ul>';
+                equipoHtml += '</div>';
                 return equipoHtml;
             }
             
             function showError(message) {
-                errorMessage.textContent = message;
-                errorMessage.classList.remove("d-none");
+                showGlobalToast(message, 'danger');
             }
             
             function showSuccess(message) {
-                successMessage.textContent = message;
-                successMessage.classList.remove("d-none");
+                showGlobalToast(message, 'success');
             }
-
 
             searchForm.addEventListener("submit", handleSearch);
             modalConfirmButton.addEventListener("click", handleReservation);
@@ -357,4 +334,3 @@
 
 </body>
 </html>
-
