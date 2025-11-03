@@ -1,7 +1,6 @@
 package com.practica.consultas;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.practica.consultas.model.Role;
 import com.practica.consultas.model.Usuario;
 import com.practica.consultas.repository.RoleRepository;
@@ -28,11 +27,17 @@ import static org.assertj.core.api.Assertions.assertThat;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("test")
 @DisplayName("Prueba de Humo del Flujo Completo de la API")
+// (Solución) Se elimina @TestInstance y @Order para que las pruebas sean independientes
 public class ApiSmokeTest {
 
     @Autowired
     private TestRestTemplate restTemplate;
 
+    // (Solución) Se eliminan las variables de instancia compartidas
+    // private String userToken;
+    // private long salaId;
+    // private String userEmail;
+    // private String userPassword;
     @BeforeAll
     static void setup(@Autowired RoleRepository roleRepository,
             @Autowired UsuarioRepository usuarioRepository,
@@ -87,7 +92,7 @@ public class ApiSmokeTest {
         HttpEntity<SalaRequest> requestSalaEntity = new HttpEntity<>(salaRequest, adminHeaders);
         ResponseEntity<JsonNode> responseSala = restTemplate.postForEntity("/api/salas", requestSalaEntity, JsonNode.class);
         assertThat(responseSala.getStatusCode()).isEqualTo(HttpStatus.OK);
-        long salaId = responseSala.getBody().get("id").asLong();
+        long salaId = responseSala.getBody().get("id").asLong(); // (Solución) Variable local
         assertThat(salaId).isPositive();
         System.out.println("✅ PASO 3: Sala creada exitosamente con ID: " + salaId);
 
@@ -95,7 +100,7 @@ public class ApiSmokeTest {
         LoginRequest loginUserRequest = new LoginRequest(userEmail, userPassword);
         ResponseEntity<JsonNode> responseLoginUser = restTemplate.postForEntity("/api/auth/login", loginUserRequest, JsonNode.class);
         assertThat(responseLoginUser.getStatusCode()).isEqualTo(HttpStatus.OK);
-        String userToken = responseLoginUser.getBody().get("token").asText();
+        String userToken = responseLoginUser.getBody().get("token").asText(); // (Solución) Variable local
         assertThat(userToken).isNotBlank();
         System.out.println("✅ PASO 4.1: Token del nuevo usuario obtenido.");
 
@@ -132,4 +137,64 @@ public class ApiSmokeTest {
         assertThat(estado).isEqualTo("CANCELADA");
         System.out.println("✅ PASO 7: La reserva fue cancelada exitosamente.");
     }
+
+    @Test
+    @DisplayName("Usuario ROLE_USER no debe poder crear salas (Debe dar 403 Forbidden)")
+    void userCannotCreateSala() {
+        // (Solución) 1. Configuración de usuario independiente
+        String uniqueId = UUID.randomUUID().toString().substring(0, 8);
+        String userEmail = "test-user-sala-" + uniqueId + "@example.com";
+        String userPassword = "password123";
+        RegisterRequest registerRequest = new RegisterRequest(userEmail, userPassword, "Test User Sala");
+        restTemplate.postForEntity("/api/auth/register", registerRequest, String.class);
+
+        // (Solución) 2. Iniciar sesión como ese usuario
+        LoginRequest loginUserRequest = new LoginRequest(userEmail, userPassword);
+        ResponseEntity<JsonNode> responseLoginUser = restTemplate.postForEntity("/api/auth/login", loginUserRequest, JsonNode.class);
+        String userToken = responseLoginUser.getBody().get("token").asText();
+        assertThat(userToken).as("El token de usuario no debe ser nulo").isNotBlank();
+
+        // 3. Intentar crear una sala (Acción de Admin)
+        SalaRequest salaRequest = new SalaRequest("Sala Prohibida", 5, "Sótano", true, Collections.emptySet());
+        HttpHeaders userHeaders = new HttpHeaders();
+        userHeaders.setBearerAuth(userToken);
+        HttpEntity<SalaRequest> requestSalaEntity = new HttpEntity<>(salaRequest, userHeaders);
+
+        ResponseEntity<String> responseSala = restTemplate.postForEntity("/api/salas", requestSalaEntity, String.class);
+
+        // 4. Verificar que da 403 Forbidden
+        assertThat(responseSala.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+        System.out.println("✅ PRUEBA DE SEGURIDAD: Usuario ROLE_USER recibió 403 (Forbidden) al intentar crear sala.");
+    }
+
+    // --- (Solución) PRUEBA DE SEGURIDAD INDEPENDIENTE ---
+    @Test
+    @DisplayName("Usuario ROLE_USER no debe poder eliminar equipos (Debe dar 403 Forbidden)")
+    void userCannotDeleteEquipo() {
+        // (Solución) 1. Configuración de usuario independiente
+        String uniqueId = UUID.randomUUID().toString().substring(0, 8);
+        String userEmail = "test-user-equipo-" + uniqueId + "@example.com";
+        String userPassword = "password123";
+        RegisterRequest registerRequest = new RegisterRequest(userEmail, userPassword, "Test User Equipo");
+        restTemplate.postForEntity("/api/auth/register", registerRequest, String.class);
+
+        // (Solución) 2. Iniciar sesión como ese usuario
+        LoginRequest loginUserRequest = new LoginRequest(userEmail, userPassword);
+        ResponseEntity<JsonNode> responseLoginUser = restTemplate.postForEntity("/api/auth/login", loginUserRequest, JsonNode.class);
+        String userToken = responseLoginUser.getBody().get("token").asText();
+        assertThat(userToken).as("El token de usuario no debe ser nulo").isNotBlank();
+
+        // 3. Intentar eliminar un equipo (ID 1, creado por V1__init.sql)
+        HttpHeaders userHeaders = new HttpHeaders();
+        userHeaders.setBearerAuth(userToken);
+        HttpEntity<String> requestEntity = new HttpEntity<>(userHeaders);
+
+        // (ID 1 debe existir de las migraciones V1)
+        ResponseEntity<String> responseDelete = restTemplate.exchange("/api/equipos/1", HttpMethod.DELETE, requestEntity, String.class);
+
+        // 4. Verificar que da 403 Forbidden
+        assertThat(responseDelete.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+        System.out.println("✅ PRUEBA DE SEGURIDAD: Usuario ROLE_USER recibió 403 (Forbidden) al intentar eliminar equipo.");
+    }
+    // --- FIN DE LA SOLUCIÓN ---
 }
