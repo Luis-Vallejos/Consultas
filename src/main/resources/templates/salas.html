@@ -92,95 +92,96 @@
 
     <script>
         document.addEventListener("DOMContentLoaded", function () {
-            const token = localStorage.getItem("jwtToken");
-            const filterForm = document.getElementById("filterForm");
-            const salasContainer = document.getElementById("salas-container");
-            const paginationControls = document.getElementById("pagination-controls");
-            const pageInfo = document.getElementById("page-info");
-            const prevPage = document.getElementById("prev-page");
-            const nextPage = document.getElementById("next-page");
-            const errorMessage = document.getElementById("error-message");
-            const loadingSpinner = document.getElementById("loading-spinner");
-            const noResults = document.getElementById("no-results");
-            let currentPage = 0;
-            let totalPages = 0;
-            const pageSize = 10;
-            if (!token) {
-                window.location.href = "/login?redirect=salas";
-                return;
-            }
+        const token = localStorage.getItem("jwtToken");
+        const filterForm = document.getElementById("filterForm");
+        const salasContainer = document.getElementById("salas-container");
+        const paginationControls = document.getElementById("pagination-controls");
+        const pageInfo = document.getElementById("page-info");
+        const prevPage = document.getElementById("prev-page");
+        const nextPage = document.getElementById("next-page");
+        const errorMessage = document.getElementById("error-message");
+        const loadingSpinner = document.getElementById("loading-spinner");
+        const noResults = document.getElementById("no-results");
+        let currentPage = 0;
+        let totalPages = 0;
+        const pageSize = 10;
+        if (!token) {
+        window.location.href = "/login?redirect=salas";
+        return;
+        }
 
-            async function fetchSalas(page = 0) {
-                loadingSpinner.classList.remove("d-none");
-                salasContainer.innerHTML = "";
-                paginationControls.classList.add("d-none");
-                errorMessage.classList.add("d-none");
-                noResults.classList.add("d-none");
-                const capacidad = document.getElementById("capacidadMinima").value;
-                const tipoEquipo = document.getElementById("tipoEquipo").value;
-                const activa = document.getElementById("estado").value;
-                const params = new URLSearchParams({
-                    page: page,
-                    size: pageSize,
-                    sort: 'nombre,asc'
-                });
-                if (capacidad) params.append('capacidadMinima', cap a cid a d);
-                        if (tipoEquipo)
-                    params.append('tipoEquipo', tipoEquipo);
-                if (activa !== "")
-                    params.append('activa', activa);
-                const url = `/api/salas?${params.toString()}`;
-                try {
-                    const response = await fetch(url, {
-                        method: "GET",
-                        headers: {
-                            "Authorization": `Bearer ${token}`,
-                            "Content-Type": "application/json"
-                        }
-                    });
-                    if (response.status === 401 || response.status === 403) {
-                        localStorage.removeItem("jwtToken");
-                        window.location.href = "/login?error=auth";
-                        return;
-                    }
+        async function fetchSalas(page = 0) {
+        loadingSpinner.classList.remove("d-none");
+        salasContainer.innerHTML = "";
+        paginationControls.classList.add("d-none");
+        errorMessage.classList.add("d-none");
+        noResults.classList.add("d-none");
+        const capacidad = document.getElementById("capacidadMinima").value;
+        const tipoEquipo = document.getElementById("tipoEquipo").value;
+        const activa = document.getElementById("estado").value;
+        const p arams = new URLSearchParams({
+        page: page,
+                size: pageSize,
+                sort: 'nombre,asc'
+        });
+        if (capacidad) params.append('capacidadMinima', cap a cid a d);
+        if (tipoEquipo)
+                params.append('tipoEquipo', tipoEquipo);
+        if (activa !== "")
+                params.append('activa', activa);
+        const url = ` / api / salas?${params.toString()}`;
+        try {
+        const response = await fetch(url, {
+        method: "GET",
+                headers: {
+                "Authorization": `Bearer ${token}`,
+                        "Content-Type" :"a p plication/json"
+                }
+        });
+        if (response.status === 401 || response.status === 403) {
+        localStorage.removeItem("jwtToken");
+        window.location.href = "/login?error=auth";
+        return;
+        }
 
-                    if (!response.ok) {
-                        throw new Error(`Error HTTP: ${response.status}`);
-                    }
+        if (!response.ok) {
+        throw new Error(`Error HTTP: ${response.status}`);
+        }
 
-                    const data = await response.json();
-                    renderSalas(data.content);
-                    renderPagination(data);
-                    if (data.content.length === 0) {
-                        noResults.classList.remove("d-none");
-                    }
+        const data = await response.json();
+        renderSalas(data.content);
+        renderPagination(data);
+        if (data.content.length === 0) {
+        noResults.classList.remove("d-none");
+        }
 
-                } catch (error) {
-                    console.error("Error al obtener salas:", error);
-                    errorMessage.classList.remove("d-none");
-                    errorMessage.textContent = "Error al cargar las salas. Por favor, intente de nuevo.";
-                } finally {
-                    loadingSpinner.classList.add("d-none");
-            }
-            }
+        } catch (error) {
+        console.error("Error al obtener salas:", error);
+        errorMessage.classList.remove("d-none");
+        errorMessage.textContent = "Error al cargar las salas. Por favor, intente de nuevo.";
+        } finally {
+        loadingSpinner.classList.add("d-none");
+        }
+        }
 
-            function renderSalas(salas) {
-                salasContainer.innerHTML = "";
-                salas.forEach(sala => {
+        function renderSalas(salas) {
+        salasContainer.innerHTML = "";
+        salas.forEach(sala => {
 
-                    const tituloSala = `
-                        <a href="/sala-detalle?id=${sala.id}" class="text-decoration-none text-dark stretched-link">
-                            ${sala.nombre}
-                        </a>
-                    `;
-                    const salaCard = `
-                        <div class="col-md-6">
-                            <div class="card h-100 shadow-sm border-0">
-                                <div class="card-body">
-                                    <div class="d-flex justify-content-between align-items-start">
-                                        <h5 class="card-title mb-1">${tituloSala}</h5> <!-- Título reemplazado -->
-                                        <span class="badge ${sala.activa ? 'bg-success-subtle text-success-emphasis' : 'bg-danger-subtle text-danger-emphasis'}">
-                                            ${sala.activa ? 'Activa' : 'Inactiva'}
+        const tituloSala = `
+                <a href="/sala-detalle?id=${sala.id}" class="text-decoration-none text-dark stretched-link">
+        ${sala.nombre}
+                </a>
+                `;
+        const salaCard = `
+                <div class="col-md-6">
+                        <div class="card h-100 shadow-sm border-0">
+        <div class="card-body">
+        <div class="d-flex justify-content-between align-items-start">
+        <h5 class="card-title mb-1">${tituloSala}</h5> <!-- Título reemplazado -->
+                <span class="badge ${sala.activa ? 'bg-success-subtle text-success-emphasis' : 'bg-danger-subtle text-danger-emphasis'}">
+                ${sala.activa ? 'Activa' :
+                'Inactiva'}
                                         </span>
                                     </div>
                                     <h6 class="card-subtitle mb-2 text-muted">
@@ -205,73 +206,66 @@
                             </div>
                         </div>
                     `;
+        salasContainer.insertAdjacentHTML("beforeend", salaCard);
+        });
+        }
 
-                    salasContainer.insertAdjacentHTML("beforeend", salaCard);
-                });
-            }
+        function renderEquipos(equipos) {
+        if (!equipos || equipos.length === 0) {
+        return '<span class="text-muted small">No hay equipos asignados.</span>';
+        }
 
-            function renderEquipos(equipos) {
-                if (!equipos || equipos.length === 0) {
-                    return '<span class="text-muted small">No hay equipos asignados.</span>';
-                }
+        let equipoHtml = '<ul class="list-group list-group-flush list-group-numbered small">';
+        equipos.forEach(equipo => {
+        equipoHtml += `<li class="list-group-item px-0 py-1">${equipo.nombre} (${equipo.tipo})</li>`;
+        });
+        equipoHtml += '</ul>';
+        return equipoHtml;
+        }
 
-                let equipoHtml = '<ul class="list-group list-group-flush list-group-numbered small">';
-                equipos.forEach(equipo => {
-                    equipoHtml += `<li class="list-group-item px-0 py-1">${equipo.nombre} (${equipo.tipo})</li>`;
-                });
-                equipoHtml += '</ul>';
-                return equipoHtml;
-            }
+        function renderPagination(pageData) {
+        if (pageData.totalPages <= 0) {
+        paginationControls.classList.add('d-none');
+        return;
+        }
 
-            function renderPagination(pageData) {
-                if (pageData.totalPages <= 0) {
-                    paginationControls.classList.add('d-none');
-                    return;
-                }
+        paginationControls.classList.remove('d-none');
+        currentPage = pageData.number;
+        totalPages = pageData.totalPages;
+        pageInfo.textContent = `Página ${currentPage + 1} de ${totalPages}`;
+        if (pageData.first) {
+        prevPage.classList.add("disabled");
+        } else {
+        prevPage.classList.remove("disabled");
+        }
 
-                paginationControls.classList.remove('d-none');
-                currentPage = pageData.number;
-                totalPages = pageData.totalPages;
-
-                pageInfo.textContent = `Página ${currentPage + 1} de ${totalPages}`;
-
-                if (pageData.first) {
-                    prevPage.classList.add("disabled");
-                } else {
-                    prevPage.classList.remove("disabled");
-                }
-
-                if (pageData.last) {
-                    nextPage.classList.add("disabled");
-                } else {
-                    nextPage.classList.remove("disabled");
-                }
-            }
+        if (pageData.last) {
+        nextPage.classList.add("disabled");
+        } else {
+        nextPage.classList.remove("disabled");
+        }
+        }
 
 
-            filterForm.addEventListener("submit", function (event) {
-                event.preventDefault();
-                fetchSalas(0);
-            });
-
-            prevPage.addEventListener("click", function (event) {
-                event.preventDefault();
-                if (currentPage > 0) {
-                    fetchSalas(currentPage - 1);
-                }
-            });
-
-            nextPage.addEventListener("click", function (event) {
-                event.preventDefault();
-                if (currentPage < totalPages - 1) {
-                    fetchSalas(currentPage + 1);
-                }
-            });
-
-            fetchSalas(0);
+        filterForm.addEventListener("submit", function (event) {
+        event.preventDefault();
+        fetchSalas(0);
+        });
+        prevPage.addEventListener("click", function (event) {
+        event.preventDefault();
+        if (currentPage > 0) {
+        fetchSalas(currentPage - 1);
+        }
+        });
+        nextPage.addEventListener("click", function (event) {
+        event.preventDefault();
+        if (currentPage < totalPages - 1) {
+        fetchSalas(currentPage + 1);
+        }
+        });
+        fetchSalas(0);
         });
     </script>
 
 </body>
 </html>
-
