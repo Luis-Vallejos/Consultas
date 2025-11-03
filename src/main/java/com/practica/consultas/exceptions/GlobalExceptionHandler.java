@@ -4,6 +4,7 @@ import com.practica.consultas.response.ErrorResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.context.request.ServletWebRequest;
@@ -41,9 +42,16 @@ public class GlobalExceptionHandler {
         return buildErrorResponse(HttpStatus.CONFLICT, message, request);
     }
 
-    // Un manejador genérico para cualquier otra excepción no controlada
+    @ExceptionHandler({AccessDeniedException.class, ForbiddenAccessException.class})
+    public ResponseEntity<ErrorResponse> handleAccessDeniedException(Exception ex, WebRequest request) {
+        String message = "Acceso denegado. No tiene los permisos necesarios para realizar esta acción.";
+        return buildErrorResponse(HttpStatus.FORBIDDEN, message, request);
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGlobalException(Exception ex, WebRequest request) {
+        ex.printStackTrace();
+
         String message = "Ocurrió un error inesperado en el servidor. Por favor, contacte al administrador.";
         return buildErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, message, request);
     }
